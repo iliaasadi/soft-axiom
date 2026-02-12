@@ -62,6 +62,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "team13.context_processors.team13_user_context",
             ],
         },
     }
@@ -110,6 +111,16 @@ JWT_REFRESH_TTL_SECONDS = env("JWT_REFRESH_TTL_SECONDS")
 
 JWT_COOKIE_SECURE = env.bool("JWT_COOKIE_SECURE", default=False)
 JWT_COOKIE_SAMESITE = env("JWT_COOKIE_SAMESITE", default="Lax")
+
+# آدرس سامانه مرکزی (Core) برای احراز هویت — در صورت خالی بودن از request.user همین سرور استفاده می‌شود.
+# برای اجرای محلی: CORE_BASE_URL=http://localhost:8000 یا خالی
+CORE_BASE_URL = env("CORE_BASE_URL", default="").strip()
+
+# صفحه ورود برای ریدایرکت در صورت نیاز به احراز هویت (مثلاً امتیازدهی در team13)
+LOGIN_URL = "/auth/"
+
+# کلید API نقشهٔ مپ (Map.ir) برای مسیریابی/ETA — اختیاری؛ در صورت خالی بودن از محاسبهٔ Haversine استفاده می‌شود.
+MAPIR_API_KEY = env("MAPIR_API_KEY", default="").strip() or env("API_KEY", default="").strip()
 
 CORS_ALLOW_CREDENTIALS = True
 

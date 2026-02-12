@@ -4,21 +4,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Group 9 - Map Service</title>
+    <title>امکانات و حمل‌ونقل — گروه Axiom (تیم ۱۳)</title>
     <link rel="stylesheet" href="{% static 'team13/styles/style.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Map Service</h1>
-    <h3>پیاده‌سازی توسط گروه 9</h3>
-    <hr style="width: 50%; margin: 20px auto; opacity: 0.3;">
-    
-    <div style="border: 2px dashed #ccc; padding: 50px; border-radius: 10px; margin: 20px 0;">
-        <p>محل قرارگیری رابط کاربری میکرو سرویس</p>
-        <p>(Microservice UI Placeholder)</p>
-    </div>
+    <div class="container">
+        <h1>سرویس امکانات و حمل‌ونقل</h1>
+        <h3>Facilities & Transportation — گروه Axiom (تیم ۱۳)</h3>
+        {% include "team13/_auth_header.html" %}
+        <hr>
 
-    <a href="/" class="back-btn"> بازگشت به داشبورد اصلی</a>
-    
+        <nav>
+            <a href="{% url 'team13:place_list' %}">مکان‌ها (POI)</a>
+            <a href="{% url 'team13:event_list' %}">رویدادها</a>
+            <a href="{% url 'team13:routes' %}">مسیریابی / ETA</a>
+            <a href="{% url 'team13:emergency' %}">مراکز امدادی نزدیک</a>
+        </nav>
+
+        <div class="detail-box">
+            <p>مشاهده مکان‌ها (هتل، رستوران، موزه، بیمارستان، تفریحی)، رویدادها، مسیریابی و زمان رسیدن (ETA)، امکانات روی مسیر، و نزدیک‌ترین مراکز امدادی در حالت اضطراری.</p>
+            <p>از لینک‌های بالا استفاده کنید. برای API خروجی JSON، پارامتر <code>?format=json</code> را به آدرس اضافه کنید.</p>
+        </div>
+
+        <a href="/" class="back-btn">بازگشت به داشبورد اصلی</a>
+        {% include "team13/_footer.html" %}
+    </div>
 </body>
 </html>

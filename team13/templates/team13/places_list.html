@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مکان‌ها (POI) — امکانات و حمل‌ونقل</title>
+    <link rel="stylesheet" href="{% static 'team13/styles/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>مکان‌ها (امکانات و نقاط گردشگری)</h1>
+        <h3>Facilities & Transportation — گروه Axiom (تیم ۱۳)</h3>
+        {% include "team13/_auth_header.html" %}
+        <nav>
+            <a href="{% url 'team13:index' %}">خانه</a>
+            <a href="{% url 'team13:place_list' %}">مکان‌ها</a>
+            <a href="{% url 'team13:event_list' %}">رویدادها</a>
+            <a href="{% url 'team13:routes' %}">مسیریابی</a>
+            <a href="{% url 'team13:emergency' %}">مراکز امدادی</a>
+        </nav>
+
+        <form method="get" action="{% url 'team13:place_list' %}" style="margin: 20px 0; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+            <div class="form-group" style="margin: 0;">
+                <label for="type">نوع مکان</label>
+                <select name="type" id="type">
+                    <option value="">همه</option>
+                    <option value="hotel" {% if filter_type == "hotel" %}selected{% endif %}>هتل</option>
+                    <option value="food" {% if filter_type == "food" %}selected{% endif %}>غذا / رستوران</option>
+                    <option value="museum" {% if filter_type == "museum" %}selected{% endif %}>موزه</option>
+                    <option value="hospital" {% if filter_type == "hospital" %}selected{% endif %}>بیمارستان</option>
+                    <option value="entertainment" {% if filter_type == "entertainment" %}selected{% endif %}>تفریحی</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin: 0;">
+                <label for="city">شهر</label>
+                <input type="text" name="city" id="city" value="{{ filter_city }}" placeholder="مثلاً تهران">
+            </div>
+            <div class="form-group" style="margin: 0; align-self: flex-end;">
+                <button type="submit" class="btn-submit">اعمال فیلتر</button>
+            </div>
+        </form>
+
+        <div class="card-list">
+            {% for p in places %}
+            <div class="card">
+                <a href="{% url 'team13:place_detail' p.place_id %}">{{ p.name_fa|default:p.name_en|default:"بدون نام" }}</a>
+                <span class="type-badge">{{ p.type_display }}</span>
+                <div class="meta">{{ p.city }} — {{ p.address|truncatewords:8 }}</div>
+            </div>
+            {% empty %}
+            <p class="detail-box">مکانی یافت نشد. فیلتر را تغییر دهید یا داده بارگذاری کنید.</p>
+            {% endfor %}
+        </div>
+
+        <a href="{% url 'team13:index' %}" class="back-btn">بازگشت به صفحه اصلی</a>
+        {% include "team13/_footer.html" %}
+    </div>
+</body>
+</html>

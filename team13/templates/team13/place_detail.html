@@ -1,0 +1,100 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ detail.name_fa|default:detail.name_en|default:"مکان" }} — امکانات و حمل‌ونقل</title>
+    <link rel="stylesheet" href="{% static 'team13/styles/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>{{ detail.name_fa|default:detail.name_en|default:"مکان" }}</h1>
+        <p class="type-badge">{{ detail.type_display }}</p>
+        {% include "team13/_auth_header.html" %}
+        <nav>
+            <a href="{% url 'team13:index' %}">خانه</a>
+            <a href="{% url 'team13:place_list' %}">مکان‌ها</a>
+            <a href="{% url 'team13:event_list' %}">رویدادها</a>
+            <a href="{% url 'team13:routes' %}">مسیریابی</a>
+            <a href="{% url 'team13:emergency' %}">مراکز امدادی</a>
+        </nav>
+
+        <div class="detail-box">
+            {% if detail.description_fa %}
+            <p>{{ detail.description_fa }}</p>
+            {% endif %}
+            <p class="address"><strong>شهر:</strong> {{ detail.city|default:"—" }} | <strong>آدرس:</strong> {{ detail.address|default:"—" }}</p>
+            <p class="address">مختصات: {{ detail.latitude }}, {{ detail.longitude }}</p>
+
+            {% if detail.hotel %}
+            <h2>جزئیات هتل</h2>
+            <p>ستاره: {{ detail.hotel.stars|default:"—" }} | بازه قیمت: {{ detail.hotel.price_range|default:"—" }}</p>
+            {% endif %}
+            {% if detail.restaurant %}
+            <h2>جزئیات رستوران</h2>
+            <p>نوع غذا: {{ detail.restaurant.cuisine|default:"—" }} | قیمت متوسط: {{ detail.restaurant.avg_price|default:"—" }}</p>
+            {% endif %}
+            {% if detail.museum %}
+            <h2>جزئیات موزه</h2>
+            <p>ساعت باز: {{ detail.museum.open_at|default:"—" }} | بسته: {{ detail.museum.close_at|default:"—" }} | قیمت بلیط: {{ detail.museum.ticket_price|default:"—" }}</p>
+            {% endif %}
+
+            {% if detail.amenities %}
+            <h2>امکانات</h2>
+            <div class="amenities-list">
+                {% for a in detail.amenities %}
+                <span>{{ a }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="detail-box">
+            <h2>نظرات و امتیازها</h2>
+            <div class="comments-list">
+                {% for c in detail.comments %}
+                <div class="comment-item">
+                    <span class="rating-stars">★ {{ c.rating }}/5</span>
+                    {% if c.created_at %}<span style="color: var(--text-muted); font-size: 0.9rem;"> — {{ c.created_at|date:"Y/m/d H:i" }}</span>{% endif %}
+                </div>
+                {% empty %}
+                <p>هنوز امتیازی ثبت نشده است.</p>
+                {% endfor %}
+            </div>
+            <form method="post" action="{% url 'team13:place_rate' place.place_id %}" style="margin-top: 16px;">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'team13:place_detail' place.place_id %}" />
+                <div class="form-group">
+                    <label for="rating">امتیاز شما (۱ تا ۵)</label>
+                    <select name="rating" id="rating" required>
+                        <option value="">انتخاب کنید</option>
+                        <option value="1">۱</option>
+                        <option value="2">۲</option>
+                        <option value="3">۳</option>
+                        <option value="4">۴</option>
+                        <option value="5">۵</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit">ثبت امتیاز</button>
+            </form>
+        </div>
+
+        {% if detail.images %}
+        <div class="detail-box">
+            <h2>تصاویر</h2>
+            {% for url in detail.images %}
+            <img src="{{ url }}" alt="" style="max-width: 200px; height: auto; margin: 8px; border-radius: 8px;" />
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <p style="margin-top: 20px;">
+            <a href="{% url 'team13:routes' %}?source_place_id={{ place.place_id }}">مسیریابی از این مکان</a>
+        </p>
+        <a href="{% url 'team13:place_list' %}" class="back-btn">بازگشت به لیست مکان‌ها</a>
+        {% include "team13/_footer.html" %}
+    </div>
+</body>
+</html>

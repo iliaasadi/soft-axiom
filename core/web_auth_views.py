@@ -2,11 +2,20 @@ from django.shortcuts import render, redirect
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth import authenticate, get_user_model
 from django.conf import settings
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from core.jwt_utils import create_access_token, create_refresh_token
 from core.views import _set_auth_cookies  # reuse same cookie logic
 
 User = get_user_model()
+
+
+def _get_safe_next(request):
+    """آدرس next برای ریدایرکت پس از ورود (فقط اگر مجاز باشد)."""
+    next_url = request.GET.get("next") or request.POST.get("next") or ""
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=request.get_host(), require_https=request.is_secure()):
+        return next_url
+    return None
 
 
 @require_http_methods(["GET", "POST"])
@@ -25,11 +34,12 @@ def login_page(request):
         else:
             access = create_access_token(user)
             refresh = create_refresh_token(user)
-            resp = redirect("home")
+            next_url = _get_safe_next(request)
+            resp = redirect(next_url if next_url else "home")
             _set_auth_cookies(resp, access, refresh, settings)
             return resp
 
-    return render(request, "auth/login.html", {"error": error})
+    return render(request, "auth/login.html", {"error": error, "next": request.GET.get("next", "")})
 
 
 @require_http_methods(["GET", "POST"])

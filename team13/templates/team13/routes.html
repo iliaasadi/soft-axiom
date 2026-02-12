@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مسیریابی و ETA — امکانات و حمل‌ونقل</title>
+    <link rel="stylesheet" href="{% static 'team13/styles/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>مسیریابی و زمان رسیدن (ETA)</h1>
+        <h3>امکانات روی مسیر — گروه Axiom (تیم ۱۳)</h3>
+        {% include "team13/_auth_header.html" %}
+        <nav>
+            <a href="{% url 'team13:index' %}">خانه</a>
+            <a href="{% url 'team13:place_list' %}">مکان‌ها</a>
+            <a href="{% url 'team13:event_list' %}">رویدادها</a>
+            <a href="{% url 'team13:routes' %}">مسیریابی</a>
+            <a href="{% url 'team13:emergency' %}">مراکز امدادی</a>
+        </nav>
+
+        <div class="detail-box">
+            <form method="get" action="{% url 'team13:routes' %}">
+                <div class="form-group">
+                    <label for="source_place_id">مبدأ</label>
+                    <select name="source_place_id" id="source_place_id" required>
+                        <option value="">انتخاب مکان مبدأ</option>
+                        {% for p in places_for_select %}
+                        <option value="{{ p.place_id }}" {% if source_place_id == p.place_id %}selected{% endif %}>{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="destination_place_id">مقصد</label>
+                    <select name="destination_place_id" id="destination_place_id" required>
+                        <option value="">انتخاب مکان مقصد</option>
+                        {% for p in places_for_select %}
+                        <option value="{{ p.place_id }}" {% if destination_place_id == p.place_id %}selected{% endif %}>{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="travel_mode">نوع حمل‌ونقل</label>
+                    <select name="travel_mode" id="travel_mode">
+                        <option value="car" {% if travel_mode == "car" %}selected{% endif %}>خودرو</option>
+                        <option value="walk" {% if travel_mode == "walk" %}selected{% endif %}>پیاده</option>
+                        <option value="transit" {% if travel_mode == "transit" %}selected{% endif %}>حمل‌ونقل عمومی</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit">محاسبه مسیر و ETA</button>
+            </form>
+        </div>
+
+        {% if route_result %}
+        <div class="result-box">
+            {% if route_result.error %}
+            <p style="color: #c62828;">{{ route_result.error }}</p>
+            {% else %}
+            <h2>نتیجه مسیریابی</h2>
+            <p><strong>مبدأ:</strong> {{ route_result.source_name }}</p>
+            <p><strong>مقصد:</strong> {{ route_result.destination_name }}</p>
+            <p><strong>نوع حمل‌ونقل:</strong> {{ route_result.travel_mode }}</p>
+            <p class="distance">فاصله: {{ route_result.distance_km }} کیلومتر</p>
+            <p class="eta">زمان رسیدن: {{ route_result.eta_minutes }} دقیقه {% if route_result.eta_source == "mapir" %}(با نقشهٔ مپ){% else %}(تقریبی){% endif %}</p>
+
+            <h2>امکانات مبدأ</h2>
+            <div class="route-amenities">
+                {% for a in route_result.source_amenities %}
+                <span>{{ a }}</span>{% if not forloop.last %} | {% endif %}
+                {% empty %}
+                <span>امکانات ثبت‌شده‌ای ندارد.</span>
+                {% endfor %}
+            </div>
+            <h2>امکانات مقصد</h2>
+            <div class="route-amenities">
+                {% for a in route_result.destination_amenities %}
+                <span>{{ a }}</span>{% if not forloop.last %} | {% endif %}
+                {% empty %}
+                <span>امکانات ثبت‌شده‌ای ندارد.</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <a href="{% url 'team13:index' %}" class="back-btn">بازگشت به صفحه اصلی</a>
+        {% include "team13/_footer.html" %}
+    </div>
+</body>
+</html>
