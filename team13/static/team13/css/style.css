@@ -345,6 +345,7 @@ body.team13-map {
   flex-direction: column;
   gap: 6px;
   margin-bottom: 12px;
+  position: relative;
 }
 .team13-favorite-search-wrap .team13-input-route {
   padding: 8px 12px;
@@ -356,18 +357,54 @@ body.team13-map {
 .team13-favorite-search-wrap .team13-input-route:last-of-type {
   margin-bottom: 0;
 }
+/* Add Favorite modal search input: icon, placeholder like main, RTL */
+.team13-favorite-search-input-wrap {
+  position: relative;
+  width: 100%;
+}
+.team13-favorite-search-icon {
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 12px;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  line-height: 1;
+  pointer-events: none;
+}
+.team13-favorite-search-input-wrap .team13-favorite-search-input {
+  width: 100%;
+  padding-inline-end: 2.5rem;
+  text-align: right;
+  direction: rtl;
+}
+.team13-favorite-search-input-wrap .team13-favorite-search-input::placeholder {
+  color: #999;
+}
+/* Add Favorite modal search: same list style as main, contained in modal, soft edges */
 .team13-favorite-search-results {
-  max-height: 160px;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 6px;
+  max-height: 260px;
   overflow-y: auto;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 12px;
   background: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  z-index: 10001;
+  padding: 10px;
+  box-sizing: border-box;
 }
 .team13-favorite-search-results .team13-search-result-item {
   padding: 10px 12px;
   cursor: pointer;
   font-size: 0.875rem;
+  border-radius: 8px;
   border-bottom: 1px solid #f3f4f6;
+  text-align: right;
+  direction: rtl;
 }
 .team13-favorite-search-results .team13-search-result-item:last-child { border-bottom: none; }
 .team13-favorite-search-results .team13-search-result-item:hover { background: #f8f9fa; }
@@ -1357,41 +1394,92 @@ body.team13-map {
   border-color: #9ca3af;
 }
 
-/* Marker popups & route lines: fade + slide up when popup appears */
-@keyframes team13PopupFadeSlideUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Marker popups: spring-in animation */
+@keyframes team13PopupSpringIn {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 @keyframes team13PathFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-/* Custom Leaflet popup: theme-consistent wrapper */
+/* Leaflet popup: RTL, premium container (18px radius, soft shadow) */
 .leaflet-popup-content-wrapper {
-  border-radius: 15px !important;
-  padding: 10px 15px !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
-  border: 1px solid #e0e0e0;
+  border-radius: 18px !important;
+  padding: 16px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05);
   background: #fff;
-  animation: team13PopupFadeSlideUp 0.28s ease-out;
+  animation: team13PopupSpringIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .leaflet-popup-content {
-  margin: 0;
-  min-width: 120px;
-  font-family: inherit;
+  margin: 0 !important;
+  min-width: 140px;
+  direction: rtl !important;
+  text-align: right !important;
+  font-family: 'Vazirmatn', Tahoma, sans-serif;
 }
+/* POI popup: title bold #1a1a1a, 12px gap before action buttons */
 .team13-popup,
 .team13-reverse-popup-content {
   line-height: 1.6;
 }
-/* Popup address text: smaller, professional */
+.team13-popup strong {
+  display: block;
+  font-weight: 800 !important;
+  font-size: 1.1rem !important;
+  color: #1a1a1a !important;
+  margin-bottom: 12px;
+}
+/* Popup address text */
 .team13-reverse-popup-address,
 .team13-popup .text-muted,
 .team13-popup .team13-popup-address {
   color: #333 !important;
   font-size: 0.875rem;
   line-height: 1.6 !important;
-  margin: 0 0 0.5rem 0;
+  margin: 10px 0 12px 0 !important;
+  display: block;
+}
+/* Popup action buttons: Details (grey), Routing (yellow), rounded */
+.team13-popup .team13-btn-route-to-place,
+.team13-popup .team13-btn-route-to-event,
+.team13-popup .team13-btn-discovery-route {
+  background: #fbc02d !important;
+  color: #000 !important;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-weight: bold;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  margin-top: 12px;
+  margin-inline-start: 8px;
+  transition: all 0.2s ease;
+}
+.team13-popup .team13-btn-route-to-place:hover,
+.team13-popup .team13-btn-route-to-event:hover,
+.team13-popup .team13-btn-discovery-route:hover {
+  filter: brightness(0.95);
+  transform: scale(1.02);
+}
+.team13-popup .team13-btn-discovery-detail {
+  display: inline-block;
+  background: #f5f5f5 !important;
+  color: #444 !important;
+  text-decoration: none !important;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  margin-inline-start: 8px;
+  margin-top: 12px;
+  font-size: 0.8125rem;
+  transition: all 0.2s ease;
+}
+.team13-popup .team13-btn-discovery-detail:hover {
+  background: #ebebeb !important;
+  color: #222 !important;
+  transform: scale(1.02);
 }
 /* "حذف نقطه" — red action button */
 .team13-btn-delete-point {
@@ -1412,7 +1500,7 @@ body.team13-map {
   background: rgba(211, 47, 47, 0.1);
   color: #b71c1c !important;
 }
-/* Leaflet close button: circular, light grey on hover */
+/* Leaflet close button: top-left for RTL (so it doesn't overlap title), circular hover */
 .leaflet-popup-close-button {
   width: 28px !important;
   height: 28px !important;
@@ -1424,23 +1512,31 @@ body.team13-map {
   color: #666 !important;
   font: 22px/28px Tahoma, sans-serif !important;
   top: 6px !important;
-  right: 6px !important;
-  transition: background 0.2s, color 0.2s;
-}
-.leaflet-container[dir="rtl"] .leaflet-popup-close-button {
   right: auto !important;
   left: 6px !important;
+  transition: background 0.2s, color 0.2s;
 }
 .leaflet-popup-close-button:hover {
   background: #e0e0e0 !important;
   color: #333 !important;
 }
-/* Popup tip (pointer): match white container */
+/* Popup tip (pointer): match white container, subtle border */
 .leaflet-popup-tip {
   background: #fff !important;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
+
+/* Category-specific POI markers: pin shape, white border, soft shadow */
+.team13-poi-pin {
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+.team13-place-marker.team13-poi-marker .team13-poi-pin,
+.team13-place-marker.team13-discovery-marker .team13-poi-pin {
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+}
+
 .leaflet-overlay-pane path {
   animation: team13PathFadeIn 0.4s ease-out;
 }

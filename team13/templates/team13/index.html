@@ -263,7 +263,10 @@
                 <button type="button" id="team13-favorite-btn-map" class="team13-favorite-picker-btn team13-btn-yellow">انتخاب از نقشه</button>
                 <div class="team13-favorite-search-wrap">
                   <label class="team13-field-label" for="team13-favorite-search-input">جستجوی آدرس</label>
-                  <input type="text" id="team13-favorite-search-input" class="team13-input-route" placeholder="آدرس یا نام مکان..." autocomplete="off" />
+                  <div class="team13-favorite-search-input-wrap">
+                    <span class="team13-favorite-search-icon" aria-hidden="true">🔍</span>
+                    <input type="text" id="team13-favorite-search-input" class="team13-input-route team13-favorite-search-input" placeholder="جستجو مکان یا آدرس..." autocomplete="off" dir="rtl" />
+                  </div>
                   <div id="team13-favorite-search-results" class="team13-favorite-search-results" hidden></div>
                 </div>
               </div>
@@ -431,6 +434,8 @@
         }
         function hideModal(el) {
           if (el) { el.hidden = true; el.classList.remove("team13-modal-open"); }
+          if (el && el.id === "team13-modal-add-favorite" && window.Team13MapData && typeof window.Team13MapData.clearFavoritePickMarker === "function")
+            window.Team13MapData.clearFavoritePickMarker();
           if (el && (el.id === "team13-modal-add-favorite" || el.id === "team13-modal-favorites-list" || el.id === "team13-modal-route-start" || el.id === "team13-modal-favorite-details"))
             document.body.classList.remove("team13-favorite-modal-open");
         }
@@ -502,34 +507,33 @@
           searchInput.addEventListener("input", function () {
             clearTimeout(searchDebounce);
             var q = (searchInput.value || "").trim();
-            if (q.length < 2) { searchResults.hidden = true; searchResults.innerHTML = ""; return; }
+            if (q.length < 3) { searchResults.hidden = true; searchResults.innerHTML = ""; return; }
             searchDebounce = setTimeout(function () {
               window.Team13MapData.mapirAutocomplete(q).then(function (items) {
                 searchResults.innerHTML = "";
                 (items || []).forEach(function (item) {
                   var title = (item.title || item.address || item.name || item.text || "").trim();
-                  var y = item.y != null ? parseFloat(item.y) : (item.lat != null ? parseFloat(item.lat) : null);
-                  var x = item.x != null ? parseFloat(item.x) : (item.lon != null ? parseFloat(item.lon) : null);
-                  if (y == null || x == null && item.geom) {
-                    var geom = item.geom || item.geometry;
-                    if (geom && geom.coordinates && geom.coordinates.length >= 2) { x = geom.coordinates[0]; y = geom.coordinates[1]; }
-                  }
-                  if (y == null || x == null) return;
+                  var ll = window.Team13MapData.getItemLatLng && window.Team13MapData.getItemLatLng(item);
+                  if (!ll) return;
+                  var lat = ll.lat, lng = ll.lng;
                   var div = document.createElement("div");
                   div.className = "team13-search-result-item";
                   div.textContent = title;
-                  div.dataset.lat = y;
-                  div.dataset.lng = x;
+                  div.dataset.lat = lat;
+                  div.dataset.lng = lng;
                   div.dataset.title = title;
                   var typeVal = (item.type || item.class || item.category || "").toLowerCase();
                   if (typeVal) { div.dataset.type = typeVal; div.dataset.typeLabel = typeVal; }
                   div.addEventListener("click", function () {
+                    var latNum = parseFloat(div.dataset.lat), lngNum = parseFloat(div.dataset.lng);
                     var typeValue = (div.dataset.type || "other").toLowerCase();
                     if (!typeLabels[typeValue]) typeValue = "other";
-                    setFavoriteCoords(parseFloat(div.dataset.lat), parseFloat(div.dataset.lng), typeValue, title);
+                    setFavoriteCoords(latNum, lngNum, typeValue, title);
                     searchResults.hidden = true;
                     searchResults.innerHTML = "";
                     searchInput.value = title;
+                    if (window.Team13MapData && typeof window.Team13MapData.showFavoritePickMarker === "function")
+                      window.Team13MapData.showFavoritePickMarker(latNum, lngNum, title);
                   });
                   searchResults.appendChild(div);
                 });
@@ -760,6 +764,8 @@
             if (e.target === overlay) {
               overlay.hidden = true;
               overlay.classList.remove("team13-modal-open");
+              if (overlay.id === "team13-modal-add-favorite" && window.Team13MapData && typeof window.Team13MapData.clearFavoritePickMarker === "function")
+                window.Team13MapData.clearFavoritePickMarker();
               if (["team13-modal-add-favorite","team13-modal-favorites-list","team13-modal-route-start","team13-modal-favorite-details"].indexOf(overlay.id) !== -1)
                 document.body.classList.remove("team13-favorite-modal-open");
             }

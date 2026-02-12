@@ -33,24 +33,54 @@
     return div.innerHTML;
   }
 
-  // --- Markers ---
-  function createPlaceIcon() {
+  // --- Category-specific POI icon config: emoji + color (pin style) ---
+  var POI_ICON_MAP = {
+    food: { emoji: '🍴', color: '#f97316', label: 'رستوران' },
+    restaurant: { emoji: '🍴', color: '#f97316', label: 'رستوران' },
+    hotel: { emoji: '🏨', color: '#2563eb', label: 'هتل' },
+    hospital: { emoji: '🏥', color: '#dc2626', label: 'بیمارستان' },
+    museum: { emoji: '🏛️', color: '#92400e', label: 'موزه' },
+    entertainment: { emoji: '🎡', color: '#16a34a', label: 'تفریحی' },
+    gym: { emoji: '🏋️', color: '#059669', label: 'ورزشگاه' },
+    other: { emoji: '📍', color: SAGE_GREEN, label: 'سایر' },
+  };
+
+  function getPoiIconConfig(type) {
+    var t = (type || '').toLowerCase().trim();
+    return POI_ICON_MAP[t] || POI_ICON_MAP.other;
+  }
+
+  function createPlaceIcon(type) {
     if (typeof L === 'undefined') return null;
+    var cfg = getPoiIconConfig(type);
+    var html = '<span class="team13-poi-pin" style="' +
+      'width:32px;height:32px;background:' + cfg.color + ';' +
+      'border:2px solid #fff;border-radius:50%;' +
+      'box-shadow:0 3px 10px rgba(0,0,0,0.25);' +
+      'display:flex;align-items:center;justify-content:center;' +
+      'font-size:16px;line-height:1;">' + cfg.emoji + '</span>';
     return L.divIcon({
-      className: 'team13-place-marker',
-      html: '<span style="width:24px;height:24px;background:' + SAGE_GREEN + ';border:2px solid #1b4332;border-radius:50%;display:block;box-shadow:0 2px 4px rgba(0,0,0,0.2);"></span>',
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
+      className: 'team13-place-marker team13-poi-marker',
+      html: html,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
     });
   }
 
-  function createDiscoveryPlaceIcon() {
+  function createDiscoveryPlaceIcon(type) {
     if (typeof L === 'undefined') return null;
+    var cfg = getPoiIconConfig(type);
+    var html = '<span class="team13-poi-pin team13-discovery-marker" style="' +
+      'width:32px;height:32px;background:' + cfg.color + ';' +
+      'border:2px solid #fff;border-radius:50%;' +
+      'box-shadow:0 3px 10px rgba(0,0,0,0.25);' +
+      'display:flex;align-items:center;justify-content:center;' +
+      'font-size:16px;line-height:1;">' + cfg.emoji + '</span>';
     return L.divIcon({
       className: 'team13-place-marker team13-discovery-marker',
-      html: '<span style="width:24px;height:24px;background:' + SAGE_GREEN + ';border:2px solid #1b4332;border-radius:50%;display:block;box-shadow:0 2px 4px rgba(0,0,0,0.2);"></span>',
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
+      html: html,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
     });
   }
 
@@ -264,7 +294,6 @@
 
   function addPlaceMarkers(map, places) {
     if (!map || !L) return;
-    var icon = createPlaceIcon();
     var allMarkers = Object.assign({}, window.allMarkers || {});
     (places || []).forEach(function (p) {
       var lat = parseFloat(p.latitude);
@@ -272,6 +301,7 @@
       if (isNaN(lat) || isNaN(lng)) return;
       var id = 'place-' + (p.place_id || p.id || String(lat) + ',' + String(lng));
       var popupContent = buildPlacePopupContent(p, lat, lng);
+      var icon = createPlaceIcon(p.type || p.category);
       var m = L.marker([lat, lng], { icon: icon }).bindPopup(popupContent);
       allMarkers[id] = m;
     });
@@ -303,6 +333,10 @@
     if (searchResultMarker && map.hasLayer(searchResultMarker)) {
       map.removeLayer(searchResultMarker);
       searchResultMarker = null;
+    }
+    if (favoritePickMarker && map.hasLayer(favoritePickMarker)) {
+      map.removeLayer(favoritePickMarker);
+      favoritePickMarker = null;
     }
     if (window.emergencyPoiMarker && map.hasLayer(window.emergencyPoiMarker)) {
       map.removeLayer(window.emergencyPoiMarker);
@@ -727,6 +761,7 @@
   // --- Search: Map.ir Autocomplete ---
   var searchDebounceTimer;
   var searchResultMarker = null;
+  var favoritePickMarker = null;
 
   function initSearch() {
     var input = document.getElementById('team13-search-input');
@@ -821,6 +856,25 @@
     if (inputDest) inputDest.value = title || '';
     clearTemporaryMapItems(map);
     flyTo(map, lat, lng, 15);
+  }
+
+  function clearFavoritePickMarker() {
+    var map = getMap();
+    if (favoritePickMarker && map && map.hasLayer(favoritePickMarker)) {
+      map.removeLayer(favoritePickMarker);
+      favoritePickMarker = null;
+    }
+  }
+
+  function showFavoritePickMarker(lat, lng, title) {
+    var map = getMap();
+    if (!map) return;
+    clearFavoritePickMarker();
+    flyTo(map, lat, lng, 15);
+    favoritePickMarker = L.marker([lat, lng], { icon: createDestMarkerIcon() }).addTo(map);
+    if (title) {
+      favoritePickMarker.bindPopup('<div class="team13-popup"><strong>' + escapeHtml(title) + '</strong></div>');
+    }
   }
 
   // --- Emergency: dedicated button (امداد اضطراری) + legacy hospital/fire if present ---
@@ -1417,12 +1471,12 @@
 
     var layer = ensureDiscoveryMarkersLayer();
     if (layer) layer.clearLayers();
-    var discoveryIcon = createDiscoveryPlaceIcon();
     filtered.forEach(function (p) {
       var lat = parseFloat(p.latitude);
       var lng = parseFloat(p.longitude);
       if (isNaN(lat) || isNaN(lng)) return;
       var popupContent = buildDiscoveryPlacePopup(p, lat, lng);
+      var discoveryIcon = createDiscoveryPlaceIcon(p.type || p.category);
       var m = L.marker([lat, lng], { icon: discoveryIcon }).bindPopup(popupContent);
       m._team13DiscoveryPlace = p;
       if (discoveryMarkersLayer) discoveryMarkersLayer.addLayer(m);
@@ -1694,6 +1748,7 @@
     syncDatabaseLayers: syncDatabaseLayers,
     startMapPickForFavorite: startMapPickForFavorite,
     mapirAutocomplete: typeof mapirAutocomplete !== 'undefined' ? mapirAutocomplete : function () { return Promise.resolve([]); },
+    getItemLatLng: typeof getItemLatLng !== 'undefined' ? getItemLatLng : function () { return null; },
     getMap: getMap,
     getRouteToPlace: requestRouteFromUserTo,
     setStartFromCoords: typeof setStartFromCoords !== 'undefined' ? setStartFromCoords : function () {},
@@ -1702,6 +1757,8 @@
     setPickMode: typeof setPickMode !== 'undefined' ? setPickMode : function () {},
     flyTo: flyTo,
     panTo: function (map, lat, lng) { flyTo(map, lat, lng); },
+    showFavoritePickMarker: typeof showFavoritePickMarker !== 'undefined' ? showFavoritePickMarker : function () {},
+    clearFavoritePickMarker: typeof clearFavoritePickMarker !== 'undefined' ? clearFavoritePickMarker : function () {},
     addPlaceMarkers: addPlaceMarkers,
     addEventMarkers: addEventMarkers,
     clearSearchResult: clearSearchResult,
