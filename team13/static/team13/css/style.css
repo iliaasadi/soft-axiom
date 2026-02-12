@@ -90,18 +90,21 @@ body.team13-map {
   text-align: right;
   direction: rtl;
 }
-/* Greeting bar (سلام، بهرام): clean space from top and sides */
+/* Greeting bar: name right, Favorites left; perfect vertical centering */
 .team13-sidebar-greeting {
   order: -1;
   padding: 25px 20px !important;
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100%;
+  gap: 12px;
   flex-wrap: wrap;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
-.team13-sidebar-greeting .auth-user-name {
+.team13-sidebar-greeting .auth-user-name,
+.team13-sidebar-greeting .team13-sidebar-greeting-name {
   color: rgba(255, 255, 255, 0.95);
   font-weight: 500;
 }
@@ -119,29 +122,23 @@ body.team13-map {
 .team13-sidebar-greeting .auth-btn-small:not(.btn-gold) {
   background: rgba(255, 255, 255, 0.9);
 }
-/* Favorites star button (علاقه‌مندی‌ها) next to greeting — small, circular, yellow */
-.team13-btn-favorites {
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px;
-  min-height: 36px;
-  padding: 0 !important;
+/* Favorites link: ⭐ مکان‌های مورد علاقه — star and text on one line */
+.team13-link-favorites {
+  background: none !important;
   border: none !important;
-  border-radius: 50% !important;
-  background-color: #fbc02d !important;
-  color: #1b4332;
-  font-size: 1.1rem;
-  line-height: 1;
+  padding: 0 !important;
   cursor: pointer;
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: filter 0.2s, transform 0.2s;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 400;
+  text-decoration: none;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  transition: color 0.2s;
 }
-.team13-btn-favorites:hover {
-  filter: brightness(1.1);
-  transform: scale(1.05);
+.team13-link-favorites:hover {
+  color: rgba(255, 255, 255, 1);
 }
 
 /* Favorites modals: overlay + content */
@@ -175,10 +172,11 @@ body.team13-map {
 }
 .team13-modal-title {
   margin: 0;
-  padding: 20px 20px 12px;
+  padding: 20px 20px 15px;
   font-size: 1.25rem;
   color: #1b4332;
-  border-bottom: 1px solid #e5e7eb;
+  text-align: center;
+  border-bottom: 1px solid #eee;
 }
 .team13-modal-text {
   margin: 0;
@@ -290,13 +288,23 @@ body.team13-map {
   gap: 12px;
 }
 .team13-favorite-picker-btn {
-  width: 100%;
+  width: 100% !important;
   padding: 10px 16px;
+  margin-bottom: 12px;
   border: none;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
   font-size: 0.9375rem;
+  box-sizing: border-box;
+}
+.team13-favorite-picker-options .team13-favorite-picker-btn:last-child {
+  margin-bottom: 0;
+}
+.team13-modal-route-start .team13-favorite-picker-btn {
+  width: 100% !important;
+  margin-bottom: 12px;
+  box-sizing: border-box;
 }
 .team13-favorite-search-wrap {
   display: flex;
@@ -445,15 +453,15 @@ body.team13-map {
 }
 .team13-home-wrap { padding: 0; }
 .team13-auth { padding: 0; }
-/* Bottom bar: Emergency + Exit, aligned right, gap 15px */
+/* Bottom bar: Emergency + Exit, level and spaced from sidebar edge */
 .team13-sidebar .team13-sidebar-auth-bottom {
   margin-top: auto !important;
   display: flex !important;
   justify-content: flex-end !important;
-  align-items: center;
-  gap: 15px !important;
+  align-items: center !important;
+  gap: 12px !important;
   width: 100%;
-  padding: 15px;
+  padding: 15px 20px !important;
   flex-shrink: 0;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
 }

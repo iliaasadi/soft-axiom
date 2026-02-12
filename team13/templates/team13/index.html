@@ -48,12 +48,14 @@
         <aside id="team13-sidebar" class="team13-sidebar" aria-label="منوی کناری">
           <div class="team13-sidebar-greeting">
             {% if team13_user %}
-              <span class="auth-user-name">سلام، {{ team13_user.first_name|default:team13_user.email }}</span>
+              <span class="team13-sidebar-greeting-name auth-user-name">سلام، {{ team13_user.first_name|default:team13_user.email }}</span>
             {% else %}
-              <a href="{% url 'auth' %}?next={{ request.path }}" class="auth-btn-small">ورود</a>
-              <a href="{% url 'signup' %}" class="auth-btn-small btn-gold">ثبت‌نام</a>
+              <span class="team13-sidebar-greeting-auth">
+                <a href="{% url 'auth' %}?next={{ request.path }}" class="auth-btn-small">ورود</a>
+                <a href="{% url 'signup' %}" class="auth-btn-small btn-gold">ثبت‌نام</a>
+              </span>
             {% endif %}
-            <button type="button" id="team13-btn-favorites" class="team13-btn-favorites" title="علاقه‌مندی‌ها" aria-label="علاقه‌مندی‌ها">⭐</button>
+            <button type="button" id="team13-btn-favorites" class="team13-link-favorites" title="مکان‌های مورد علاقه" aria-label="مکان‌های مورد علاقه">⭐ مکان‌های مورد علاقه</button>
           </div>
           <div class="team13-sidebar-header">
             <div class="team13-home-wrap">
