@@ -38,15 +38,11 @@
     style="font-family: &quot;Vazirmatn&quot;, Tahoma, sans-serif"
   >
     <div id="team13-app" class="team13-app">
-      <!-- Top bar: title + hamburger (visible on mobile only via CSS) -->
-      <header class="team13-topbar">
-        <span class="team13-topbar-title">سامانه جامع آکسیوم</span>
+      <div id="team13-main-wrap" class="team13-main-wrap">
+        <!-- Hamburger: fixed top-right on mobile (no top bar) -->
         <button type="button" id="menu-toggle" class="team13-btn-hamburger" aria-label="منو" aria-expanded="false">
           <span></span><span></span><span></span>
         </button>
-      </header>
-
-      <div id="team13-main-wrap" class="team13-main-wrap">
         <!-- Sidebar: 350px desktop; drawer on mobile, toggled by hamburger -->
         <aside id="team13-sidebar" class="team13-sidebar" aria-label="منوی کناری">
           <div class="team13-sidebar-header">
@@ -215,7 +211,7 @@
           <div class="team13-map-search-wrap">
             <div class="team13-search-input-wrap">
               <input type="text" id="team13-search-input" class="team13-search-input" placeholder="جستجو مکان یا آدرس..." autocomplete="off" />
-              <button type="button" id="team13-clear-search" class="team13-btn-search-clear team13-search-clear-btn" aria-label="پاک کردن" data-tooltip="پاک کردن">×</button>
+              <button type="button" id="team13-clear-search" class="team13-btn-search-clear team13-search-clear-btn search-cancel-btn" aria-label="پاک کردن" data-tooltip="پاک کردن">×</button>
             </div>
             <div id="team13-search-results" class="team13-search-results" hidden></div>
           </div>

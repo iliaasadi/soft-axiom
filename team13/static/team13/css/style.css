@@ -60,20 +60,14 @@ body.team13-map {
   overflow: hidden;
   position: relative;
 }
+/* Axiom top bar removed: map and sidebar fill viewport */
 .team13-topbar {
-  position: relative;
-  height: 3.5rem;
-  background: var(--team13-dark);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 1.25rem;
-  flex-shrink: 0;
-  padding-inline: 1rem;
+  display: none !important;
 }
-.team13-topbar-title { flex: 1; text-align: center; }
+.team13-main-wrap {
+  height: 100vh;
+  top: 0;
+}
 
 /* Sidebar: fixed on the right, RTL, always stays right */
 .sidebar,
@@ -194,8 +188,8 @@ body.team13-map {
   top: 1rem;
   left: 50%;
   transform: translateX(-50%);
-  width: 60%;
-  max-width: 420px;
+  width: 500px;
+  max-width: 90%;
   z-index: 1200;
 }
 .team13-search-input-wrap {
@@ -204,8 +198,9 @@ body.team13-map {
 }
 .team13-search-input {
   width: 100%;
-  padding: 0.65rem 2.5rem 0.65rem 1rem;
-  font-size: 0.9375rem;
+  padding: 12px 20px;
+  padding-inline-end: 2.75rem;
+  font-size: 1rem;
   border: 1px solid #ddd;
   border-radius: 30px;
   background: #fff;
@@ -218,12 +213,13 @@ body.team13-map {
   border-color: var(--team13-gold);
   box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.35);
 }
-/* Search bar "X": ghost style — no green block; simple gray/green × icon */
+/* Search bar "X": ghost style; pop & rotate on hover */
 .team13-search-clear-btn.team13-btn-search-clear,
-.team13-btn-search-clear {
+.team13-btn-search-clear,
+.search-cancel-btn {
   position: absolute;
   top: 50%;
-  inset-inline-end: 0.5rem;
+  inset-inline-end: 0.65rem;
   transform: translateY(-50%);
   width: 28px;
   height: 28px;
@@ -242,8 +238,14 @@ body.team13-map {
   padding: 0;
   box-shadow: none;
   -webkit-tap-highlight-color: transparent;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-.team13-btn-search-clear:hover { color: #1b4332; }
+.team13-search-clear-btn:hover,
+.team13-btn-search-clear:hover,
+.search-cancel-btn:hover {
+  transform: translateY(-50%) scale(1.2) rotate(90deg);
+  color: #d32f2f;
+}
 .team13-search-results {
   position: absolute;
   top: 100%;
@@ -472,7 +474,11 @@ body.team13-map {
   box-sizing: border-box;
 }
 .team13-sidebar .ui-card,
-.team13-sidebar .team13-route-card {
+.team13-sidebar .team13-route-card,
+.team13-sidebar .team13-panel,
+.team13-sidebar .team13-card {
+  direction: rtl;
+  text-align: right;
   margin-left: 10px;
   margin-right: 10px;
 }
@@ -541,16 +547,16 @@ body.team13-map {
   color: #1b4332;
   cursor: pointer;
 }
-/* Transport mode: row-reverse for RTL, equal pills, no crushing */
+/* Transport mode: row-reverse, space-between, equal pills, no crushing */
 .team13-route-mode-wrap {
   margin-top: 10px;
   display: flex;
   flex-direction: row-reverse;
   flex-wrap: nowrap;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   width: 100%;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   box-sizing: border-box;
 }
@@ -564,7 +570,7 @@ body.team13-map {
 .transport-btn,
 .team13-route-mode-btn {
   flex: 1;
-  min-width: 80px;
+  min-width: 70px;
   padding: 8px 4px;
   font-size: 0.85rem;
   border: 1px solid #e0e0e0;
@@ -1074,26 +1080,18 @@ body:not(.team13-map) .team13-footer .footer-links a:hover { text-decoration: un
   pointer-events: auto;
 }
 
-/* Tablet & Mobile (max-width: 1024px): sidebar overlay, slide from right, hamburger top-right */
+/* Tablet & Mobile (max-width: 1024px): sidebar overlay, slide from right, hamburger fixed top-right */
 @media (max-width: 1024px) {
-  .team13-topbar {
-    justify-content: space-between;
-    position: relative;
-  }
-  .team13-topbar-title {
-    text-align: right;
-  }
   .team13-map-main {
     margin-right: 0; /* full width when sidebar is overlay */
   }
   .team13-btn-hamburger,
   #menu-toggle {
     display: flex;
-    position: absolute;
-    top: 50%;
+    position: fixed;
+    top: 20px;
     right: 20px;
     left: auto;
-    transform: translateY(-50%);
     z-index: 2001;
   }
   .sidebar,
@@ -1117,7 +1115,7 @@ body:not(.team13-map) .team13-footer .footer-links a:hover { text-decoration: un
   }
   .team13-map-search-wrap {
     width: 90%;
-    max-width: none;
+    max-width: 500px;
   }
   .team13-sidebar-header {
     flex-wrap: wrap;
@@ -1126,17 +1124,17 @@ body:not(.team13-map) .team13-footer .footer-links a:hover { text-decoration: un
   .team13-route-mode-wrap {
     display: flex;
     flex-direction: row-reverse;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
     width: 100%;
-    gap: 8px;
+    gap: 10px;
     margin-top: 10px;
     min-width: 0;
   }
   .team13-route-mode-wrap .transport-btn,
   .team13-route-mode-wrap .team13-route-mode-btn {
     flex: 1;
-    min-width: 80px;
+    min-width: 70px;
     padding: 8px 4px;
     font-size: 0.85rem;
   }
