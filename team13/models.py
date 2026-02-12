@@ -2,6 +2,7 @@
 # توجه: کاربر (User) در core و دیتابیس default است؛ در اینجا فقط user_id ذخیره می‌شود.
 
 import uuid
+from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
@@ -96,11 +97,12 @@ class EventTranslation(models.Model):
 
 
 class Image(models.Model):
-    """تصویر مرتبط با یک مکان یا رویداد."""
+    """تصویر مرتبط با یک مکان، رویداد، یا مکان در انتظار تأیید (pending_place)."""
 
     class TargetType(models.TextChoices):
         PLACE = "place", "مکان"
         EVENT = "event", "رویداد"
+        PENDING_PLACE = "pending_place", "مکان در انتظار تأیید"
 
     image_id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, db_column="image_id"
@@ -239,3 +241,50 @@ class RouteLog(models.Model):
 
     def __str__(self):
         return f"{self.source_place_id} → {self.destination_place_id} ({self.travel_mode})"
+
+
+class PlaceContribution(models.Model):
+    """پیشنهاد مکان توسط کاربر؛ پس از تأیید به Place تبدیل می‌شود."""
+
+    contribution_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, db_column="contribution_id"
+    )
+    name_fa = models.CharField(max_length=255)
+    name_en = models.CharField(max_length=255, blank=True)
+    type = models.CharField(max_length=32, choices=Place.PlaceType.choices)
+    address = models.TextField(blank=True)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    city = models.CharField(max_length=255, blank=True)
+    submitted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="team13_place_contributions",
+        db_column="submitted_by_id",
+        db_constraint=False,
+    )
+    is_approved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = "team13"
+        db_table = "team13_place_contributions"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.name_fa} ({self.contribution_id})"
+
+
+class TeamAdmin(models.Model):
+    """کاربران مجاز به عنوان ادمین تیم ۱۳ (شناسه کاربر از دیتابیس default، بدون FK برای جلوگیری از خطای cross-DB)."""
+
+    user_id = models.CharField(max_length=64, unique=True, db_index=True, db_column="user_id", null=True, blank=True)
+
+    class Meta:
+        app_label = "team13"
+        db_table = "team13_team_admins"
+
+    def __str__(self):
+        return str(self.user_id)

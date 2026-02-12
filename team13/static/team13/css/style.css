@@ -140,6 +140,26 @@ body.team13-map {
 .team13-link-favorites:hover {
   color: rgba(255, 255, 255, 1);
 }
+/* ثبت مکان جدید: same row as favorites, distinct style */
+.team13-btn-register-place {
+  background: rgba(251, 192, 45, 0.95) !important;
+  border: none !important;
+  color: #1b4332 !important;
+  padding: 6px 12px !important;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.team13-btn-register-place:hover {
+  transform: scale(1.03);
+  box-shadow: 0 2px 12px rgba(251, 192, 45, 0.5);
+}
 
 /* Favorites modals: overlay + content */
 .team13-modal-overlay {
@@ -200,6 +220,100 @@ body.team13-map {
 .team13-modal-actions .team13-btn-save-favorite,
 .team13-modal-actions .team13-btn-yellow {
   width: auto !important;
+}
+
+/* ثبت مکان جدید (Contribution) modal — RTL, form styling */
+.team13-modal-contribution-wrap .team13-modal {
+  max-width: 420px;
+  padding: 28px !important;
+}
+.team13-modal-contribution .team13-modal-contribution-title {
+  color: #1b4332;
+  font-size: 1.35rem;
+  margin-bottom: 6px;
+}
+.team13-modal-contribution-hint {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: 0 0 16px 0;
+  line-height: 1.4;
+}
+.team13-form-contribution .team13-form-row {
+  margin-bottom: 14px;
+}
+.team13-form-contribution .team13-field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #374151;
+}
+.team13-contribution-input,
+.team13-contribution-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.team13-contribution-input:focus,
+.team13-contribution-select:focus {
+  outline: none;
+  border-color: var(--team13-primary, #40916c);
+  box-shadow: 0 0 0 3px rgba(64, 145, 108, 0.15);
+}
+.team13-required { color: #dc2626; }
+.team13-contribution-file {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  font-size: 0.875rem;
+}
+.team13-contribution-file-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 4px;
+}
+.team13-contribution-actions {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+.team13-btn-contribution-submit {
+  background: #fbc02d !important;
+  color: #1b4332 !important;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.team13-btn-contribution-submit:hover {
+  transform: scale(1.02);
+  box-shadow: 0 2px 12px rgba(251, 192, 45, 0.4);
+}
+.team13-btn-contribution-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+.team13-contribution-message {
+  margin-top: 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+.team13-contribution-message-success {
+  background: #d1fae5;
+  color: #065f46;
+}
+.team13-contribution-message-error {
+  background: #fee2e2;
+  color: #991b1b;
 }
 .team13-btn-login-modal {
   display: inline-block;

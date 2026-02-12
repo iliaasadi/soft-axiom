@@ -1365,12 +1365,53 @@
     return true;
   }
 
-  // --- Reverse geocode on map click: place marker and show Iranian address (when not in pick mode) ---
+  // --- Reverse geocode on map click; long-press opens contribution modal ---
   function initReverseGeocodeClick() {
     var map = getMap();
     if (!map || !window.Team13Api || typeof window.Team13Api.reverseGeocode !== 'function') return;
     map.off('click', onMapClickReverseGeocode);
     map.on('click', onMapClickReverseGeocode);
+
+    var longPressTimer = null;
+    function clearLongPress() {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    }
+    function startLongPress(ev) {
+      clearLongPress();
+      var latlng = map.containerPointToLatLng(ev.containerPoint);
+      longPressTimer = setTimeout(function () {
+        longPressTimer = null;
+        window._team13LongPressJustFired = true;
+        if (typeof window.Team13OpenContributionModal === 'function') {
+          window.Team13OpenContributionModal(latlng.lat, latlng.lng);
+          if (typeof window.showToast === 'function') window.showToast('مکان برای ثبت انتخاب شد.');
+        }
+      }, 500);
+    }
+    map.on('mousedown', function (ev) { startLongPress(ev); });
+    map.on('mouseup', clearLongPress);
+    map.on('mouseout', clearLongPress);
+    map.getContainer().addEventListener('touchstart', function (ev) {
+      if (ev.touches.length !== 1) return;
+      var touch = ev.touches[0];
+      var rect = map.getContainer().getBoundingClientRect();
+      var containerPoint = L.point(touch.clientX - rect.left, touch.clientY - rect.top);
+      var latlng = map.containerPointToLatLng(containerPoint);
+      clearLongPress();
+      longPressTimer = setTimeout(function () {
+        longPressTimer = null;
+        window._team13LongPressJustFired = true;
+        if (typeof window.Team13OpenContributionModal === 'function') {
+          window.Team13OpenContributionModal(latlng.lat, latlng.lng);
+          if (typeof window.showToast === 'function') window.showToast('مکان برای ثبت انتخاب شد.');
+        }
+      }, 500);
+    }, { passive: true });
+    map.getContainer().addEventListener('touchend', clearLongPress, { passive: true });
+    map.getContainer().addEventListener('touchcancel', clearLongPress, { passive: true });
   }
 
   function buildReversePopupContent(lat, lng, address, markerRef, mapRef) {
@@ -1427,6 +1468,10 @@
   }
 
   function onMapClickReverseGeocode(e) {
+    if (window._team13LongPressJustFired) {
+      window._team13LongPressJustFired = false;
+      return;
+    }
     if (onMapClickForDiscovery(e)) return;
     if (onMapClickForStartDest(e)) return;
     if (window._team13PickForFavorite && typeof window._team13PickForFavorite === 'function') {
@@ -1938,6 +1983,12 @@
     mapirAutocomplete: typeof mapirAutocomplete !== 'undefined' ? mapirAutocomplete : function () { return Promise.resolve([]); },
     getItemLatLng: typeof getItemLatLng !== 'undefined' ? getItemLatLng : function () { return null; },
     getMap: getMap,
+    getMapCenter: function () {
+      var map = getMap();
+      if (!map || !map.getCenter) return null;
+      var c = map.getCenter();
+      return c ? { lat: c.lat, lng: c.lng } : null;
+    },
     getRouteToPlace: requestRouteFromUserTo,
     setStartFromCoords: typeof setStartFromCoords !== 'undefined' ? setStartFromCoords : function () {},
     setDestFromCoords: typeof setDestFromCoords !== 'undefined' ? setDestFromCoords : function () {},

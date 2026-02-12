@@ -14,4 +14,11 @@ urlpatterns = [
     path("events/<uuid:event_id>/rate/", views.event_rate, name="event_rate"),
     path("routes/", views.route_request, name="routes"),
     path("emergency/", views.emergency_nearby, name="emergency"),
+    path("contribution/", views.submit_contribution, name="submit_contribution"),
+    path("contribution-image/<str:filename>/", views.serve_contribution_image, name="serve_contribution_image"),
+    path("admin/", views.team13_admin_dashboard, name="team13_admin_dashboard"),
+    path("admin-panel/", views.team13_admin_dashboard, name="team13_admin_panel"),
+    path("admin/approve/<uuid:contribution_id>/", views.team13_admin_approve, name="team13_admin_approve"),
+    path("admin/reject/<uuid:contribution_id>/", views.team13_admin_reject, name="team13_admin_reject"),
+    path("admin/add-admin/", views.team13_admin_add_admin, name="team13_admin_add_admin"),
 ]

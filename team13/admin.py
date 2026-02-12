@@ -10,7 +10,9 @@ from .models import (
     RestaurantDetails,
     MuseumDetails,
     PlaceAmenity,
+    PlaceContribution,
     RouteLog,
+    TeamAdmin,
 )
 
 
@@ -87,6 +89,19 @@ class MuseumDetailsAdmin(admin.ModelAdmin):
 class PlaceAmenityAdmin(admin.ModelAdmin):
     list_display = ("place", "amenity_name")
     list_filter = ("amenity_name",)
+
+
+@admin.register(PlaceContribution)
+class PlaceContributionAdmin(admin.ModelAdmin):
+    list_display = ("contribution_id", "name_fa", "type", "city", "is_approved", "submitted_by", "created_at")
+    list_filter = ("type", "is_approved")
+    search_fields = ("name_fa", "name_en", "address")
+    readonly_fields = ("contribution_id", "created_at")
+
+
+@admin.register(TeamAdmin)
+class TeamAdminAdmin(admin.ModelAdmin):
+    list_display = ("user_id",)
 
 
 @admin.register(RouteLog)
