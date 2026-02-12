@@ -133,10 +133,11 @@
   <body>
     <div class="container team13-admin-page">
       {% include "team13/_auth_header.html" %}
-      <nav style="margin-bottom: 20px">
-        <a href="{% url 'team13:index' %}">خانه / نقشه</a>
+      <nav style="margin-bottom: 20px" class="team13-main-nav">
+        <a href="{% url 'team13:index' %}"{% if request.resolver_match.url_name == 'index' %} class="team13-nav-active"{% endif %}>خانه / نقشه</a>
+        <a href="{% url 'team13:place_list' %}"{% if request.resolver_match.url_name == 'place_list' %} class="team13-nav-active"{% endif %}>برترین‌ها</a>
         <a href="{% url 'team13:place_list' %}">مکان‌ها</a>
-        <a href="{% url 'team13:team13_admin_panel' %}">پنل مدیریت</a>
+        <a href="{% url 'team13:team13_admin_panel' %}"{% if request.resolver_match.url_name == 'team13_admin_dashboard' or request.resolver_match.url_name == 'team13_admin_panel' %} class="team13-nav-active"{% endif %}>پنل مدیریت</a>
       </nav>
 
       <h1 class="team13-admin-header">پنل مدیریت تیم ۱۳</h1>
@@ -204,47 +205,30 @@
               {% for item in pending_requests %}
               <tr>
                 <td>
-                  {{ item.contribution.name_fa }}{% if item.contribution.name_en
-                  %}
-                  <span style="color: #6b7280"
-                    >/ {{ item.contribution.name_en }}</span
-                  >{% endif %}
+                  {{ item.contribution.name_fa }}
+                  {% if item.contribution.name_en %}
+                  <span style="color: #6b7280">/ {{ item.contribution.name_en }}</span>
+                  {% endif %}
                 </td>
                 <td>{{ item.contribution.get_type_display }}</td>
                 <td>{{ item.submitter_display }}</td>
                 <td class="team13-admin-cell-image">
-                  {% if item.images %} {% for url in item.images %}
-                  <img src="{{ url }}" alt="" />
-                  {% endfor %} {% else %}
+                  {% if item.images %}
+                  {% for url in item.images %}
+                  <img src="{{ url }}" alt="place" />
+                  {% endfor %}
+                  {% else %}
                   <span style="color: #9ca3af">—</span>
                   {% endif %}
                 </td>
                 <td class="team13-admin-cell-actions">
-                  <form
-                    method="post"
-                    action="{% url 'team13:team13_admin_reject' item.contribution.contribution_id %}"
-                    style="display: inline"
-                  >
+                  <form method="post" action="{% url 'team13:team13_admin_reject' item.contribution.contribution_id %}" style="display: inline">
                     {% csrf_token %}
-                    <button
-                      type="submit"
-                      class="team13-admin-btn-reject"
-                      onclick="
-                        return confirm('از رد این پیشنهاد اطمینان دارید؟');
-                      "
-                    >
-                      رد
-                    </button>
+                    <button type="submit" class="team13-admin-btn-reject" onclick="return confirm('از رد این پیشنهاد اطمینان دارید؟');">رد</button>
                   </form>
-                  <form
-                    method="post"
-                    action="{% url 'team13:team13_admin_approve' item.contribution.contribution_id %}"
-                    style="display: inline"
-                  >
+                  <form method="post" action="{% url 'team13:team13_admin_approve' item.contribution.contribution_id %}" style="display: inline">
                     {% csrf_token %}
-                    <button type="submit" class="team13-admin-btn-approve">
-                      تأیید
-                    </button>
+                    <button type="submit" class="team13-admin-btn-approve">تأیید</button>
                   </form>
                 </td>
               </tr>

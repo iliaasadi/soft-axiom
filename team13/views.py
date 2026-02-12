@@ -11,7 +11,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from urllib.parse import quote
-from django.db.models import Avg
+from django.db.models import Avg, Q, Subquery, OuterRef
+from django.db.models.functions import Coalesce
 from django.views.decorators.http import require_GET, require_POST
 from core.auth import api_login_required
 
@@ -86,17 +87,99 @@ def base(request):
 # مکان‌ها (POI)
 # -----------------------------------------------------------------------------
 
+def _parse_lat_lng(request):
+    """Parse lat/lng from GET; return (lat, lng) or (None, None) if invalid/missing."""
+    lat_s = request.GET.get("lat")
+    lng_s = request.GET.get("lng")
+    if lat_s is None or lng_s is None:
+        return None, None
+    try:
+        lat = float(lat_s)
+        lng = float(lng_s)
+        if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+            return None, None
+        return lat, lng
+    except (TypeError, ValueError):
+        return None, None
+
+
+def _apply_price_level_filter(qs, price_level):
+    """Filter queryset by price_level (Pricing): 1=budget, 2=mid, 3=high. Applies to hotels (stars) and restaurants (avg_price); other types are included."""
+    if not price_level:
+        return qs
+    level = str(price_level).strip()
+    other_types = [Place.PlaceType.MUSEUM, Place.PlaceType.ENTERTAINMENT, Place.PlaceType.HOSPITAL]
+    if level == "1":
+        qs = qs.filter(
+            Q(type=Place.PlaceType.HOTEL, hotel_details__stars__lte=2)
+            | Q(type=Place.PlaceType.FOOD, restaurant_details__avg_price__lte=200000)
+            | Q(type__in=other_types)
+        )
+    elif level == "2":
+        qs = qs.filter(
+            Q(type=Place.PlaceType.HOTEL, hotel_details__stars=3)
+            | Q(
+                type=Place.PlaceType.FOOD,
+                restaurant_details__avg_price__gt=200000,
+                restaurant_details__avg_price__lte=500000,
+            )
+            | Q(type__in=other_types)
+        )
+    elif level == "3":
+        qs = qs.filter(
+            Q(type=Place.PlaceType.HOTEL, hotel_details__stars__gte=4)
+            | Q(type=Place.PlaceType.FOOD, restaurant_details__avg_price__gt=500000)
+            | Q(type__in=other_types)
+        )
+    return qs
+
+
 @require_GET
 def place_list(request):
-    """لیست مکان‌ها با فیلتر نوع و شهر. خروجی: JSON (API) یا صفحه HTML."""
-    qs = Place.objects.all().prefetch_related("translations")
-    place_type = request.GET.get("type")
-    if place_type:
+    """لیست مکان‌ها (Top 10 بر اساس امتیاز)، فیلتر نوع/شهر/قیمت، و فاصله Haversine در صورت ارسال lat/lng."""
+    # Subquery: average rating (stars) per place from Comment
+    rating_subq = (
+        Comment.objects.filter(
+            target_type=Comment.TargetType.PLACE,
+            target_id=OuterRef("place_id"),
+        )
+        .values("target_id")
+        .annotate(avg_rating=Avg("rating"))
+        .values("avg_rating")
+    )
+    qs = (
+        Place.objects.all()
+        .select_related("hotel_details", "restaurant_details")
+        .prefetch_related("translations")
+        .annotate(avg_stars=Coalesce(Subquery(rating_subq), 0.0))
+        .order_by("-avg_stars")
+    )
+    # Category (Type): type or category GET param
+    place_type = request.GET.get("type") or request.GET.get("category")
+    if place_type and place_type in dict(Place.PlaceType.choices):
         qs = qs.filter(type=place_type)
     city = request.GET.get("city")
     if city:
         qs = qs.filter(city__icontains=city)
-    places_qs = list(qs[:100])
+    # Pricing filter
+    price_level = request.GET.get("price_level")
+    qs = _apply_price_level_filter(qs, price_level)
+    # Rating filter (minimum stars)
+    min_rating = request.GET.get("min_rating")
+    if min_rating is not None:
+        try:
+            r = float(min_rating)
+            if 1 <= r <= 5:
+                qs = qs.filter(avg_stars__gte=r)
+        except (TypeError, ValueError):
+            pass
+    # Top 10 by stars (fetch more when distance filter will be applied)
+    max_distance = request.GET.get("max_distance")
+    try:
+        max_dist_km = float(max_distance) if max_distance else None
+    except (TypeError, ValueError):
+        max_dist_km = None
+    places_qs = list(qs[:50] if max_dist_km else qs[:10])
     place_ids = [p.place_id for p in places_qs]
     rating_rows = (
         Comment.objects.filter(
@@ -108,11 +191,12 @@ def place_list(request):
     )
     rating_by_place = {str(r["target_id"]): round(float(r["avg_rating"]), 1) for r in rating_rows}
 
+    user_lat, user_lng = _parse_lat_lng(request)
     places = []
     for p in places_qs:
         trans_fa = p.translations.filter(lang="fa").first()
         trans_en = p.translations.filter(lang="en").first()
-        places.append({
+        item = {
             "place_id": str(p.place_id),
             "type": p.type,
             "type_display": p.get_type_display(),
@@ -123,7 +207,15 @@ def place_list(request):
             "name_fa": trans_fa.name if trans_fa else "",
             "name_en": trans_en.name if trans_en else "",
             "rating": rating_by_place.get(str(p.place_id)),
-        })
+        }
+        if user_lat is not None and user_lng is not None:
+            item["distance_km"] = round(_distance_km(user_lat, user_lng, p.latitude, p.longitude), 2)
+        places.append(item)
+
+    # Distance filter (when lat/lng present): keep only places within max_distance_km
+    if max_dist_km is not None and user_lat is not None and user_lng is not None:
+        places = [item for item in places if item.get("distance_km") is not None and item["distance_km"] <= max_dist_km]
+    places = places[:10]
 
     if _wants_json(request):
         return JsonResponse({"places": places})
@@ -132,6 +224,11 @@ def place_list(request):
         "places": places,
         "filter_type": place_type or "",
         "filter_city": city or "",
+        "filter_min_rating": request.GET.get("min_rating") or "",
+        "filter_price_level": request.GET.get("price_level") or "",
+        "filter_max_distance": request.GET.get("max_distance") or "",
+        "current_lat": user_lat,
+        "current_lng": user_lng,
     })
 
 

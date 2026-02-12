@@ -13,13 +13,7 @@
         <h1>حالت اضطراری — مراکز امدادی نزدیک</h1>
         <h3>نزدیک‌ترین بیمارستان‌ها و مراکز درمانی — گروه Axiom (تیم ۱۳)</h3>
         {% include "team13/_auth_header.html" %}
-        <nav>
-            <a href="{% url 'team13:index' %}">خانه</a>
-            <a href="{% url 'team13:place_list' %}">مکان‌ها</a>
-            <a href="{% url 'team13:event_list' %}">رویدادها</a>
-            <a href="{% url 'team13:routes' %}">مسیریابی</a>
-            <a href="{% url 'team13:emergency' %}">مراکز امدادی</a>
-        </nav>
+        {% include "team13/_nav.html" %}
 
         <div class="detail-box">
             <form method="get" action="{% url 'team13:emergency' %}">

@@ -1997,7 +1997,8 @@ body:not(.team13-map) nav {
   justify-content: center;
   margin: 20px 0;
 }
-body:not(.team13-map) nav a {
+body:not(.team13-map) nav a,
+body:not(.team13-map) .team13-nav-btn {
   padding: 10px 18px;
   background-color: var(--team13-sidebar-green);
   color: white;
@@ -2006,7 +2007,13 @@ body:not(.team13-map) nav a {
   font-weight: bold;
   font-size: 0.95rem;
 }
-body:not(.team13-map) nav a:hover { background-color: var(--leaf-green); }
+body:not(.team13-map) nav a:hover,
+body:not(.team13-map) .team13-nav-btn:hover { background-color: var(--leaf-green); }
+body:not(.team13-map) nav a.team13-nav-active,
+body:not(.team13-map) .team13-nav-btn.team13-nav-active {
+  background-color: var(--leaf-green);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+}
 
 body:not(.team13-map) .back-btn {
   display: inline-flex;

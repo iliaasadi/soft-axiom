@@ -13,13 +13,7 @@
         <h1>{{ detail.name_fa|default:detail.name_en|default:"مکان" }}</h1>
         <p class="type-badge">{{ detail.type_display }}</p>
         {% include "team13/_auth_header.html" %}
-        <nav>
-            <a href="{% url 'team13:index' %}">خانه</a>
-            <a href="{% url 'team13:place_list' %}">مکان‌ها</a>
-            <a href="{% url 'team13:event_list' %}">رویدادها</a>
-            <a href="{% url 'team13:routes' %}">مسیریابی</a>
-            <a href="{% url 'team13:emergency' %}">مراکز امدادی</a>
-        </nav>
+        {% include "team13/_nav.html" %}
 
         <div class="detail-box">
             {% if detail.description_fa %}
