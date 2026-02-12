@@ -600,6 +600,7 @@
         } else if (!isNaN(lat) && !isNaN(lng)) {
           openActionMenuAt(lat, lng, name);
         }
+        if (typeof window.Team13CloseSidebar === 'function') window.Team13CloseSidebar();
         return;
       }
       var card = ev.target.closest('.team13-clickable-card[data-lat][data-lng]');
@@ -613,15 +614,15 @@
         } else if (!isNaN(lat) && !isNaN(lng)) {
           openActionMenuAt(lat, lng, name);
         }
+        if (typeof window.Team13CloseSidebar === 'function') window.Team13CloseSidebar();
       }
     });
     eventsList && eventsList.addEventListener('click', function (ev) {
       var btn = ev.target.closest('.team13-btn-show-event-on-map');
-      if (!btn) {
-        var card = ev.target.closest('.team13-clickable-card[data-event-id]');
-        if (card && window.Team13Api && window.Team13Api.api) {
-          var eventId = card.getAttribute('data-event-id');
-          var title = card.getAttribute('data-title') || '';
+      if (btn) {
+        var eventId = btn.getAttribute('data-event-id');
+        var title = btn.getAttribute('data-title') || '';
+        if (eventId && window.Team13Api && window.Team13Api.api) {
           window.Team13Api.api.eventDetail(eventId).then(function (detail) {
             var lat = detail.latitude != null ? parseFloat(detail.latitude) : NaN;
             var lng = detail.longitude != null ? parseFloat(detail.longitude) : NaN;
@@ -634,22 +635,26 @@
             }
           }).catch(function () {});
         }
+        if (typeof window.Team13CloseSidebar === 'function') window.Team13CloseSidebar();
         return;
       }
-      var eventId = btn.getAttribute('data-event-id');
-      var title = btn.getAttribute('data-title') || '';
-      if (!eventId || !window.Team13Api || !window.Team13Api.api) return;
-      window.Team13Api.api.eventDetail(eventId).then(function (detail) {
-        var lat = detail.latitude != null ? parseFloat(detail.latitude) : NaN;
-        var lng = detail.longitude != null ? parseFloat(detail.longitude) : NaN;
-        if (!isNaN(lat) && !isNaN(lng)) {
-          if (window.allMarkers && window.allMarkers['event-' + eventId]) {
-            showPoiMarkerById(map, 'event-' + eventId, lat, lng, false);
-          } else {
-            openActionMenuAt(lat, lng, title);
+      var card = ev.target.closest('.team13-clickable-card[data-event-id]');
+      if (card && window.Team13Api && window.Team13Api.api) {
+        var eventId = card.getAttribute('data-event-id');
+        var title = card.getAttribute('data-title') || '';
+        window.Team13Api.api.eventDetail(eventId).then(function (detail) {
+          var lat = detail.latitude != null ? parseFloat(detail.latitude) : NaN;
+          var lng = detail.longitude != null ? parseFloat(detail.longitude) : NaN;
+          if (!isNaN(lat) && !isNaN(lng)) {
+            if (window.allMarkers && window.allMarkers['event-' + eventId]) {
+              showPoiMarkerById(map, 'event-' + eventId, lat, lng, false);
+            } else {
+              openActionMenuAt(lat, lng, title);
+            }
           }
-        }
-      }).catch(function () {});
+        }).catch(function () {});
+        if (typeof window.Team13CloseSidebar === 'function') window.Team13CloseSidebar();
+      }
     });
   }
 
@@ -1021,9 +1026,12 @@
       modeWrap.querySelectorAll('.team13-route-mode-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
           routeMode = this.getAttribute('data-mode') || 'driving';
-          modeWrap.querySelectorAll('.team13-route-mode-btn').forEach(function (b) { b.classList.remove('active'); });
-          this.classList.add('active');
+          modeWrap.querySelectorAll('.team13-route-mode-btn').forEach(function (b) {
+            b.classList.remove('active', 'active-transport');
+          });
+          this.classList.add('active', 'active-transport');
           drawRouteFromToIfBoth();
+          if (typeof window.Team13CloseSidebar === 'function') window.Team13CloseSidebar();
         });
       });
     }
@@ -1213,7 +1221,9 @@
     var modeWrap = document.getElementById('team13-route-mode-wrap');
     if (modeWrap) {
       modeWrap.querySelectorAll('.team13-route-mode-btn').forEach(function (b) {
-        b.classList.toggle('active', (b.getAttribute('data-mode') || '') === routeMode);
+        var isActive = (b.getAttribute('data-mode') || '') === routeMode;
+        b.classList.toggle('active', isActive);
+        b.classList.toggle('active-transport', isActive);
       });
     }
     drawRouteFromToIfBoth();

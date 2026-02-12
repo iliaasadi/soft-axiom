@@ -38,22 +38,27 @@
     style="font-family: &quot;Vazirmatn&quot;, Tahoma, sans-serif"
   >
     <div id="team13-app" class="team13-app">
-      <!-- Top bar -->
+      <!-- Top bar: title + hamburger (visible on mobile only via CSS) -->
       <header class="team13-topbar">
-        سامانه جامع آکسیوم
+        <span class="team13-topbar-title">سامانه جامع آکسیوم</span>
+        <button type="button" id="hamburger-menu" class="team13-btn-hamburger" aria-label="منو" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
       </header>
 
       <div id="team13-main-wrap" class="team13-main-wrap">
         <!-- Sidebar: 350px desktop; drawer on mobile, toggled by hamburger -->
         <aside id="team13-sidebar" class="team13-sidebar" aria-label="منوی کناری">
-          <div class="team13-home-wrap">
-            <button type="button" id="team13-btn-home" class="team13-btn-home team13-btn-primary" title="Back to Home" aria-label="بازگشت به خانه">
-              <span class="team13-btn-home-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span>
-              <span class="team13-btn-home-label">بازگشت به خانه</span>
-            </button>
-          </div>
-          <div class="team13-auth">
-            {% include "team13/_auth_header.html" %}
+          <div class="team13-sidebar-header">
+            <div class="team13-home-wrap">
+              <button type="button" id="team13-btn-home" class="team13-btn-home team13-btn-primary" title="Back to Home" aria-label="بازگشت به خانه">
+                <span class="team13-btn-home-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span>
+                <span class="team13-btn-home-label">بازگشت به خانه</span>
+              </button>
+            </div>
+            <div class="team13-auth">
+              {% include "team13/_auth_header.html" %}
+            </div>
           </div>
           <div class="team13-tabs flex border-b" role="tablist">
             <button
@@ -151,9 +156,9 @@
                 </div>
                 <div id="team13-route-mode-wrap" class="team13-route-mode-wrap">
                   <span class="team13-route-mode-label">نوع مسیر:</span>
-                  <button type="button" class="team13-route-mode-btn active" data-mode="driving">خودرو</button>
-                  <button type="button" class="team13-route-mode-btn" data-mode="walking">پیاده</button>
-                  <button type="button" class="team13-route-mode-btn" data-mode="bicycle">دوچرخه</button>
+                  <button type="button" class="transport-btn team13-route-mode-btn active active-transport" data-mode="driving">خودرو</button>
+                  <button type="button" class="transport-btn team13-route-mode-btn" data-mode="walking">پیاده</button>
+                  <button type="button" class="transport-btn team13-route-mode-btn" data-mode="bicycle">دوچرخه</button>
                 </div>
               </div>
               <div id="route-info-box" class="team13-route-info-box mb-3">
@@ -205,10 +210,6 @@
         </aside>
         <!-- Overlay when sidebar open on mobile (tap to close) -->
         <div id="team13-sidebar-overlay" class="team13-sidebar-overlay" aria-hidden="true"></div>
-        <!-- Hamburger: visible on mobile/tablet to open sidebar -->
-        <button type="button" id="team13-btn-hamburger" class="team13-btn-hamburger" aria-label="منو" aria-expanded="false">
-          <span></span><span></span><span></span>
-        </button>
         <!-- Main: map (flex-grow) -->
         <main class="team13-map-main">
           <div class="team13-map-search-wrap">
@@ -274,11 +275,12 @@
         });
         var sidebar = document.getElementById("team13-sidebar");
         var overlay = document.getElementById("team13-sidebar-overlay");
-        var hamburger = document.getElementById("team13-btn-hamburger");
+        var hamburger = document.getElementById("hamburger-menu") || document.getElementById("team13-btn-hamburger");
         function closeSidebar() {
           if (sidebar) {
             sidebar.classList.remove("team13-sidebar-open");
             sidebar.classList.remove("active");
+            sidebar.classList.remove("active-sidebar");
           }
           if (overlay) overlay.classList.remove("team13-sidebar-overlay-visible");
           if (hamburger) hamburger.setAttribute("aria-expanded", "false");
@@ -287,16 +289,18 @@
           if (sidebar) {
             sidebar.classList.add("team13-sidebar-open");
             sidebar.classList.add("active");
+            sidebar.classList.add("active-sidebar");
           }
           if (overlay) overlay.classList.add("team13-sidebar-overlay-visible");
           if (hamburger) hamburger.setAttribute("aria-expanded", "true");
         }
         function toggleSidebar() {
-          if (sidebar && (sidebar.classList.contains("team13-sidebar-open") || sidebar.classList.contains("active"))) closeSidebar();
+          if (sidebar && (sidebar.classList.contains("team13-sidebar-open") || sidebar.classList.contains("active") || sidebar.classList.contains("active-sidebar"))) closeSidebar();
           else openSidebar();
         }
         if (hamburger) hamburger.addEventListener("click", toggleSidebar);
         if (overlay) overlay.addEventListener("click", closeSidebar);
+        window.Team13CloseSidebar = closeSidebar;
       })();
     </script>
   </body>

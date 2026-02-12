@@ -10,7 +10,6 @@ button {
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
-.team13-btn-home:hover,
 .team13-btn-discovery-search:hover,
 .team13-btn-events-near-me:hover,
 .team13-btn-pick-map:hover,
@@ -57,6 +56,7 @@ body.team13-map {
   position: relative;
 }
 .team13-topbar {
+  position: relative;
   height: 3.5rem;
   background: var(--team13-dark);
   color: #fff;
@@ -66,7 +66,9 @@ body.team13-map {
   font-weight: 600;
   font-size: 1.25rem;
   flex-shrink: 0;
+  padding-inline: 1rem;
 }
+.team13-topbar-title { flex: 1; text-align: center; }
 
 /* Sidebar: fixed 350px, full height, flex column — no overlapping */
 .sidebar,
@@ -88,22 +90,70 @@ body.team13-map {
 .team13-sidebar .team13-tabs,
 .team13-sidebar .team13-tab-btn { color: #fff; }
 .team13-sidebar .team13-tab-btn { background: transparent; background-color: transparent; }
-.team13-home-wrap { padding: 0.75rem 1rem; }
+/* Sidebar header: Home + Auth in one row, aligned, no overlap */
+.team13-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 0.75rem 1rem;
+}
+.team13-home-wrap { padding: 0; }
+.team13-auth { padding: 0; }
+/* Return Home: ghost button (no bulky green block) */
 .team13-btn-home {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: none;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
-  background: var(--team13-primary);
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
   cursor: pointer;
   font-family: inherit;
   font-size: 0.9375rem;
+  transition: background 0.3s, border-color 0.3s, transform 0.2s, box-shadow 0.2s;
 }
-.team13-btn-home:hover { filter: brightness(1.1); }
-.team13-auth { padding: 0 1rem 0.5rem; }
+.team13-btn-home:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+/* Login/Register (sidebar): match Home feel, subtle hover */
+.team13-sidebar .auth-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.team13-sidebar .auth-header a,
+.team13-sidebar .auth-header .auth-btn-small {
+  color: #fff;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: background 0.3s, color 0.3s, text-decoration 0.3s;
+}
+.team13-sidebar .auth-header a:hover,
+.team13-sidebar .auth-header .auth-btn-small:hover {
+  background: rgba(255, 255, 255, 0.1);
+  text-decoration: underline;
+}
+.team13-sidebar .auth-header .auth-user-name {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 500;
+  padding: 0 4px;
+}
+.team13-sidebar .auth-header .btn-gold {
+  background: rgba(255, 193, 7, 0.25);
+  color: #fff;
+  border: 1px solid rgba(255, 193, 7, 0.5);
+}
+.team13-sidebar .auth-header .btn-gold:hover {
+  background: rgba(255, 193, 7, 0.35);
+  text-decoration: underline;
+}
 
 /* Map main: search top-center, map fill, Focus bottom-left */
 .team13-map-main {
@@ -260,15 +310,18 @@ body.team13-map {
 .team13-panel .team13-route-mode-label { color: #333; }
 .team13-panel .team13-route-mode-btn {
   color: #333;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(0, 0, 0, 0.12);
   background: #fff;
   background-color: #fff;
+  border-radius: 20px;
 }
-.team13-panel .team13-route-mode-btn[data-mode="driving"].active {
-  background: #40916c;
-  background-color: #40916c;
+.team13-panel .transport-btn.active-transport,
+.team13-panel .team13-route-mode-btn.active {
+  background: #40916c !important;
+  background-color: #40916c !important;
   border-color: #40916c;
-  color: #fff;
+  color: #fff !important;
+  box-shadow: 0 4px 10px rgba(64, 145, 108, 0.3);
 }
 .team13-panel .team13-btn-input-clear { color: #666; }
 .team13-panel .team13-btn-pick-map,
@@ -389,8 +442,16 @@ body.team13-map {
 .team13-start-dest-wrap .team13-input-route,
 .team13-panel .team13-input-route,
 .team13-panel .team13-events-city-input { width: 100%; margin-bottom: 15px; }
+/* مبدا / مقصد: labels above inputs, not to the side */
 .team13-start-dest-wrap .team13-field-label,
-.team13-field-label { display: block; margin-bottom: 0.25rem; font-size: 0.875rem; background: none; background-color: transparent; }
+.team13-field-label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.875rem;
+  font-weight: bold;
+  background: none;
+  background-color: transparent;
+}
 .team13-input-btn-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .team13-input-with-clear { position: relative; flex: 1; min-width: 0; }
 .team13-input-route {
@@ -428,31 +489,40 @@ body.team13-map {
   color: #1b4332;
   cursor: pointer;
 }
+/* Transport mode: horizontal row, pill buttons, white bg; active = Sage Green */
 .team13-route-mode-wrap {
   margin-top: 0.75rem;
   display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 10px;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
 .team13-route-mode-label { font-size: 0.8125rem; color: #333; }
+.transport-btn,
 .team13-route-mode-btn {
-  padding: 0.4rem 0.7rem;
+  padding: 0.45rem 0.9rem;
   font-size: 0.8125rem;
-  border: 1px solid #ddd;
-  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 20px;
   background: #fff;
   background-color: #fff;
   color: #333;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 .team13-route-mode-btn:hover {
   transform: scale(1.05);
 }
-.team13-route-mode-btn.active { background: transparent; background-color: transparent; border-color: #ddd; color: #333; }
-.team13-route-mode-btn[data-mode="driving"].active { background: #40916c; background-color: #40916c; border-color: #40916c; color: #fff; }
+.transport-btn.active-transport,
+.team13-route-mode-btn.active {
+  background-color: #40916c !important;
+  color: #fff !important;
+  border-color: #40916c;
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(64, 145, 108, 0.3);
+}
 .team13-events-city-input {
   width: 100%;
   padding: 0.55rem 0.85rem;
@@ -664,13 +734,13 @@ body.team13-map {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Route info floating card — only visible when route is active; hidden on Clear Route */
+/* Route info floating card — only visible when route is active; hidden on Clear Route; z-index 1200 above map */
 .team13-route-info,
 .route-info-card {
   position: absolute;
   bottom: 20px;
   inset-inline-end: 20px;
-  z-index: 1001;
+  z-index: 1200;
   background: #fff;
   padding: 15px;
   border-radius: 10px;
@@ -890,4 +960,102 @@ body:not(.team13-map) .team13-footer .footer-links a:hover { text-decoration: un
   body:not(.team13-map) .container { max-width: 100%; }
   body:not(.team13-map) nav { gap: 8px; }
   body:not(.team13-map) nav a { padding: 8px 14px; font-size: 0.9rem; }
+}
+
+/* ========== Map page: responsive sidebar + hamburger (max-width: 768px) ========== */
+.team13-btn-hamburger {
+  display: none;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  z-index: 1101;
+  transition: background 0.2s;
+}
+.team13-btn-hamburger:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+.team13-btn-hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 1px;
+  transition: transform 0.2s, opacity 0.2s;
+}
+.team13-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.team13-sidebar-overlay.team13-sidebar-overlay-visible {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+  .team13-topbar {
+    justify-content: space-between;
+  }
+  .team13-topbar-title {
+    text-align: right;
+  }
+  .team13-btn-hamburger {
+    display: flex;
+  }
+  .sidebar,
+  .team13-sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100vh;
+    min-width: 0;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 2000;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+  }
+  .team13-sidebar.team13-sidebar-open,
+  .team13-sidebar.active-sidebar {
+    transform: translateX(0);
+  }
+  .team13-map-search-wrap {
+    width: 90%;
+    max-width: none;
+  }
+  .team13-sidebar-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .team13-route-mode-wrap {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .team13-input-route,
+  .team13-events-city-input,
+  .team13-search-input {
+    max-width: 100%;
+  }
+  .team13-start-dest-wrap .team13-input-route,
+  .team13-panel .team13-input-route,
+  .team13-panel .team13-events-city-input {
+    max-width: 100%;
+  }
 }
