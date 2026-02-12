@@ -161,7 +161,7 @@ body.team13-map {
 }
 .team13-modal {
   background: #fff;
-  border-radius: 12px;
+  border-radius: 20px !important;
   max-width: 400px;
   width: 90%;
   max-height: 90vh;
@@ -214,7 +214,7 @@ body.team13-map {
   padding: 8px 16px;
   border: 1px solid #d1d5db;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 12px !important;
   cursor: pointer;
   color: #374151;
   font-size: 0.875rem;
@@ -241,7 +241,7 @@ body.team13-map {
   padding: 8px 12px;
   margin-bottom: 12px;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: 12px !important;
   font-size: 0.9375rem;
   box-sizing: border-box;
 }
@@ -256,11 +256,11 @@ body.team13-map {
 .team13-icon-option {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 15px;
   cursor: pointer;
   padding: 8px 12px;
   border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 12px !important;
   font-size: 1.25rem;
   transition: border-color 0.2s, background 0.2s;
 }
@@ -274,7 +274,7 @@ body.team13-map {
   background-color: #fbc02d;
   color: #1b4332;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px !important;
   font-weight: 600;
   cursor: pointer;
 }
@@ -283,7 +283,7 @@ body.team13-map {
   background-color: #fbc02d !important;
   color: #1b4332 !important;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px !important;
   font-weight: 600;
   cursor: pointer;
   padding: 8px 16px;
@@ -320,7 +320,7 @@ body.team13-map {
   padding: 10px 16px;
   margin-bottom: 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px !important;
   font-weight: 600;
   cursor: pointer;
   font-size: 0.9375rem;
@@ -350,7 +350,7 @@ body.team13-map {
   padding: 8px 12px;
   margin-bottom: 12px;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: 12px !important;
   box-sizing: border-box;
 }
 .team13-favorite-search-wrap .team13-input-route:last-of-type {
@@ -466,10 +466,19 @@ body.team13-map {
 .team13-detail-row { margin: 0 0 10px 0; font-size: 0.9375rem; color: #374151; line-height: 1.5; }
 .team13-detail-row:last-child { margin-bottom: 0; }
 
+/* White content area: rounded top corners + inner padding */
+.team13-sidebar .team13-panels-wrap {
+  border-radius: 20px 20px 0 0 !important;
+  overflow: hidden;
+  background: var(--team13-bg, #f8f9fa);
+}
 .team13-sidebar .team13-panels-wrap,
 .team13-sidebar .team13-panel {
   text-align: right;
   direction: rtl;
+}
+.team13-sidebar .team13-panel {
+  padding: 20px !important;
 }
 /* Map takes remaining width on the left (sidebar fixed 350px on right) */
 .team13-map-main {
@@ -493,13 +502,13 @@ body.team13-map {
 }
 .team13-home-wrap { padding: 0; }
 .team13-auth { padding: 0; }
-/* Bottom bar: Emergency + Exit, level and spaced from sidebar edge */
+/* Bottom bar: Emergency + Exit, bottom-right, gap 15px, rounded 10px */
 .team13-sidebar .team13-sidebar-auth-bottom {
   margin-top: auto !important;
   display: flex !important;
   justify-content: flex-end !important;
   align-items: center !important;
-  gap: 12px !important;
+  gap: 15px !important;
   width: 100%;
   padding: 15px 20px !important;
   flex-shrink: 0;
@@ -511,7 +520,7 @@ body.team13-map {
   color: #ffffff !important;
   display: inline-block !important;
   padding: 8px 15px !important;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   font-weight: bold !important;
   border: none;
   cursor: pointer;
@@ -533,7 +542,7 @@ body.team13-map {
   margin: 0 !important;
   background-color: #fbc02d !important;
   color: #1b4332 !important;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   text-decoration: none !important;
   font-weight: bold !important;
   border: none;
@@ -772,24 +781,25 @@ body.team13-map {
 .team13-panel .team13-events-city-input::placeholder { color: #999; }
 .team13-panel .team13-route-mode-label { color: #333; }
 .team13-panel .team13-route-mode-btn {
-  width: 100%;
-  display: block;
-  padding: 12px;
+  display: inline-flex !important;
+  width: auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
   font-size: 0.9rem;
-  text-align: center;
   color: #333;
-  border: 1px solid #e0e0e0;
+  border: 2px solid #e0e0e0;
   background: #fff;
   background-color: #fff;
-  border-radius: 12px;
+  border-radius: 12px !important;
 }
 .team13-panel .transport-btn.active-transport,
 .team13-panel .team13-route-mode-btn.active {
-  background: #fbc02d !important;
-  background-color: #fbc02d !important;
-  border-color: rgba(27, 67, 50, 0.25);
+  border-color: #fbc02d !important;
+  background: rgba(251, 192, 45, 0.2) !important;
+  background-color: rgba(251, 192, 45, 0.2) !important;
   color: #1b4332 !important;
-  box-shadow: 0 2px 8px rgba(27, 67, 50, 0.25);
+  box-shadow: 0 2px 8px rgba(251, 192, 45, 0.35);
 }
 .team13-panel .team13-btn-input-clear { color: #666; }
 .team13-panel .team13-btn-pick-map,
@@ -1116,11 +1126,13 @@ body.team13-map {
   color: #1b4332;
   cursor: pointer;
 }
-/* Transport mode: vertical stack — no overlap */
+/* Transport mode: horizontal icon-based selector, 12px gap icon–text, yellow active */
 .team13-route-mode-wrap {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
   width: 100%;
   margin-top: 10px;
   box-sizing: border-box;
@@ -1134,13 +1146,16 @@ body.team13-map {
 }
 .transport-btn,
 .team13-route-mode-btn {
-  width: 100%;
-  display: block;
-  padding: 12px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 12px;
+  width: auto;
+  min-width: 0;
+  padding: 10px 14px;
   font-size: 0.9rem;
   text-align: center;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px !important;
   background: #fff;
   background-color: #fff;
   color: #333;
@@ -1148,15 +1163,23 @@ body.team13-map {
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   box-sizing: border-box;
 }
+.team13-transport-icon {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.team13-transport-label {
+  white-space: nowrap;
+}
 .team13-route-mode-btn:hover {
-  transform: scale(1.01);
+  transform: scale(1.02);
 }
 .transport-btn.active-transport,
 .team13-route-mode-btn.active {
-  background-color: #fbc02d !important;
+  border-color: #fbc02d !important;
+  background-color: rgba(251, 192, 45, 0.2) !important;
   color: #1b4332 !important;
-  border-color: rgba(27, 67, 50, 0.25);
-  box-shadow: 0 2px 8px rgba(27, 67, 50, 0.25);
+  box-shadow: 0 2px 8px rgba(251, 192, 45, 0.35);
 }
 .team13-events-city-input {
   width: 100%;
@@ -1729,19 +1752,22 @@ body.team13-favorite-modal-open #menu-toggle {
   }
   .team13-route-mode-wrap {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 12px;
     width: 100%;
     margin-top: 10px;
     box-sizing: border-box;
   }
   .team13-route-mode-wrap .transport-btn,
   .team13-route-mode-wrap .team13-route-mode-btn {
-    width: 100%;
-    display: block;
-    padding: 12px;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 12px;
+    width: auto;
+    padding: 10px 14px;
     font-size: 0.9rem;
-    text-align: center;
   }
   .team13-input-route,
   .team13-events-city-input,
