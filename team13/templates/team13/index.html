@@ -409,6 +409,44 @@
         if (hamburger) hamburger.addEventListener("click", toggleSidebar);
         if (overlay) overlay.addEventListener("click", closeSidebar);
         window.Team13CloseSidebar = closeSidebar;
+        window.Team13OpenSidebar = openSidebar;
+      })();
+
+      (function () {
+        function applyRouteFromUrl() {
+          var params = new URLSearchParams(window.location.search);
+          var action = params.get("action");
+          var startName = params.get("start_name");
+          var startLat = params.get("start_lat");
+          var startLng = params.get("start_lng");
+          if (action !== "route" || !startLat || !startLng) return;
+          var decodedName = startName ? decodeURIComponent(startName) : "";
+          if (typeof window.Team13OpenSidebar === "function") window.Team13OpenSidebar();
+          var routeTab = document.querySelector("[data-tab=\"routes\"]");
+          if (routeTab) {
+            routeTab.click();
+            var panels = document.querySelectorAll(".team13-panel");
+            document.querySelectorAll(".team13-tab-btn").forEach(function (t) { t.classList.remove("active"); t.setAttribute("aria-selected", "false"); });
+            panels.forEach(function (p) { p.classList.remove("active"); });
+            routeTab.classList.add("active");
+            routeTab.setAttribute("aria-selected", "true");
+            var panelRoutes = document.getElementById("panel-routes");
+            if (panelRoutes) panelRoutes.classList.add("active");
+          }
+          var inputStart = document.getElementById("team13-input-start");
+          if (inputStart) inputStart.value = decodedName;
+          if (window.Team13MapData && typeof window.Team13MapData.setStartFromCoords === "function") {
+            var lat = parseFloat(startLat);
+            var lng = parseFloat(startLng);
+            if (!isNaN(lat) && !isNaN(lng)) window.Team13MapData.setStartFromCoords(lat, lng, decodedName);
+          }
+          try { window.history.replaceState({}, "", window.location.pathname); } catch (e) {}
+        }
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", function () { setTimeout(applyRouteFromUrl, 200); });
+        } else {
+          setTimeout(applyRouteFromUrl, 200);
+        }
       })();
 
       (function () {

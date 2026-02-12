@@ -91,7 +91,7 @@
         {% endif %}
 
         <p style="margin-top: 20px;">
-            <a href="{% url 'team13:routes' %}?source_place_id={{ place.place_id }}">مسیریابی از این مکان</a>
+            <a href="{% url 'team13:index' %}?action=route&amp;start_id={{ place.place_id }}&amp;start_name={{ detail.name_fa|default:detail.name_en|default:'مکان'|urlencode }}&amp;start_lat={{ detail.latitude }}&amp;start_lng={{ detail.longitude }}" class="team13-btn-route-from-place">مسیریابی از این مکان</a>
         </p>
         <a href="{% url 'team13:place_list' %}" class="back-btn">بازگشت به لیست مکان‌ها</a>
         {% include "team13/_footer.html" %}

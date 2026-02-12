@@ -45,16 +45,17 @@
         <div class="card-list">
             {% for p in places %}
             <div class="card">
-                <a href="{% url 'team13:place_detail' p.place_id %}">{{ p.name_fa|default:p.name_en|default:"بدون نام" }}</a>
+                <p style="margin: 0 0 6px 0; font-weight: 600; color: var(--team13-sidebar-green, #1b4332);">{{ p.name_fa|default:p.name_en|default:"بدون نام" }}</p>
                 <span class="type-badge">{{ p.type_display }}</span>
                 <div class="meta">{{ p.city }} — {{ p.address|truncatewords:8 }}</div>
+                <a href="{% url 'team13:place_detail' p.place_id %}" class="team13-card-link">مشاهده جزئیات</a>
             </div>
             {% empty %}
             <p class="detail-box">مکانی یافت نشد. فیلتر را تغییر دهید یا داده بارگذاری کنید.</p>
             {% endfor %}
         </div>
 
-        <a href="{% url 'team13:index' %}" class="back-btn">بازگشت به صفحه اصلی</a>
+        <a href="{% url 'team13:index' %}" class="back-btn team13-back-to-map">بازگشت به نقشه</a>
         {% include "team13/_footer.html" %}
     </div>
 </body>
