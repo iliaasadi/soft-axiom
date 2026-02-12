@@ -15,11 +15,11 @@ button {
 .team13-btn-pick-map:hover,
 .team13-btn-my-location:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(64, 145, 108, 0.3);
+  box-shadow: 0 4px 12px rgba(251, 192, 45, 0.4);
 }
 .team13-btn-center-me:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 14px rgba(64, 145, 108, 0.4);
+  box-shadow: 0 0 14px rgba(251, 192, 45, 0.5);
 }
 .team13-route-mode-btn:hover {
   transform: scale(1.05);
@@ -34,10 +34,15 @@ body.team13-map {
 :root {
   --team13-dark: #1b4332;
   --team13-primary: #40916c;
+  --team13-gold: #ffc107;
+  --team13-gold-alt: #fbc02d;
   --team13-bg: #f8f9fa;
   --team13-surface: #ffffff;
   --team13-text: #1b4332;
 }
+/* Iran Nama theme: primary actions = Gold, text = Dark Green */
+.team13-map .team13-primary-gold,
+.team13-app .team13-primary-gold { --team13-action: var(--team13-gold); --team13-action-text: #1b4332; }
 
 /* App & main layout */
 .team13-app {
@@ -70,22 +75,24 @@ body.team13-map {
 }
 .team13-topbar-title { flex: 1; text-align: center; }
 
-/* Sidebar: fixed 350px, full height, flex column — no overlapping */
+/* Sidebar: right side, 350px, full height */
 .sidebar,
 .team13-sidebar {
   width: 350px;
   min-width: 350px;
   height: 100vh;
   flex-shrink: 0;
+  order: 2;
   background: var(--team13-dark);
   background-color: #1b4332;
   color: #fff;
   display: flex;
   flex-direction: column;
-  box-shadow: -2px 0 10px rgba(0,0,0,0.15);
+  box-shadow: 2px 0 10px rgba(0,0,0,0.15);
   overflow-y: auto;
   z-index: 1100;
 }
+.team13-map-main { order: 1; }
 .team13-sidebar,
 .team13-sidebar .team13-tabs,
 .team13-sidebar .team13-tab-btn { color: #fff; }
@@ -119,7 +126,7 @@ body.team13-map {
   background: rgba(255, 255, 255, 0.18);
   border-color: rgba(255, 255, 255, 0.45);
 }
-/* Login/Register (sidebar): match Home feel, subtle hover */
+/* Login/Register (sidebar): Gold primary buttons, dark green text */
 .team13-sidebar .auth-header {
   display: flex;
   align-items: center;
@@ -128,17 +135,20 @@ body.team13-map {
 }
 .team13-sidebar .auth-header a,
 .team13-sidebar .auth-header .auth-btn-small {
-  color: #fff;
-  font-weight: 500;
+  color: #1b4332;
+  font-weight: 600;
   text-decoration: none;
   padding: 6px 12px;
   border-radius: 8px;
-  transition: background 0.3s, color 0.3s, text-decoration 0.3s;
+  background: var(--team13-gold);
+  border: 1px solid rgba(27, 67, 50, 0.2);
+  transition: background 0.3s, color 0.3s, filter 0.2s;
 }
 .team13-sidebar .auth-header a:hover,
 .team13-sidebar .auth-header .auth-btn-small:hover {
-  background: rgba(255, 255, 255, 0.1);
-  text-decoration: underline;
+  background: var(--team13-gold-alt);
+  filter: brightness(1.05);
+  color: #1b4332;
 }
 .team13-sidebar .auth-header .auth-user-name {
   color: rgba(255, 255, 255, 0.95);
@@ -146,13 +156,14 @@ body.team13-map {
   padding: 0 4px;
 }
 .team13-sidebar .auth-header .btn-gold {
-  background: rgba(255, 193, 7, 0.25);
-  color: #fff;
-  border: 1px solid rgba(255, 193, 7, 0.5);
+  background: var(--team13-gold);
+  color: #1b4332;
+  border: 1px solid rgba(27, 67, 50, 0.2);
 }
 .team13-sidebar .auth-header .btn-gold:hover {
-  background: rgba(255, 193, 7, 0.35);
-  text-decoration: underline;
+  background: var(--team13-gold-alt);
+  filter: brightness(1.05);
+  color: #1b4332;
 }
 
 /* Map main: search top-center, map fill, Focus bottom-left */
@@ -190,8 +201,8 @@ body.team13-map {
 }
 .team13-search-input::placeholder { color: #999; }
 .team13-search-input:focus {
-  border-color: var(--team13-primary);
-  box-shadow: 0 0 0 2px rgba(64, 145, 108, 0.25);
+  border-color: var(--team13-gold);
+  box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.35);
 }
 /* Search bar "X": ghost style — no green block; simple gray/green × icon */
 .team13-search-clear-btn.team13-btn-search-clear,
@@ -247,8 +258,8 @@ body.team13-map {
   height: 48px;
   border-radius: 50%;
   border: none;
-  background: var(--team13-primary);
-  color: #fff;
+  background: var(--team13-gold);
+  color: #1b4332;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -317,11 +328,11 @@ body.team13-map {
 }
 .team13-panel .transport-btn.active-transport,
 .team13-panel .team13-route-mode-btn.active {
-  background: #40916c !important;
-  background-color: #40916c !important;
-  border-color: #40916c;
-  color: #fff !important;
-  box-shadow: 0 4px 10px rgba(64, 145, 108, 0.3);
+  background: var(--team13-gold) !important;
+  background-color: var(--team13-gold) !important;
+  border-color: rgba(27, 67, 50, 0.3);
+  color: #1b4332 !important;
+  box-shadow: 0 4px 10px rgba(251, 192, 45, 0.4);
 }
 .team13-panel .team13-btn-input-clear { color: #666; }
 .team13-panel .team13-btn-pick-map,
@@ -362,7 +373,7 @@ body.team13-map {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--team13-primary);
+  background: var(--team13-gold);
   cursor: pointer;
 }
 .team13-discovery-chips {
@@ -396,8 +407,8 @@ body.team13-map {
   cursor: pointer;
 }
 .team13-btn-discovery:hover {
-  background: var(--team13-primary);
-  color: #fff;
+  background: var(--team13-gold);
+  color: #1b4332;
 }
 /* جستجو + پاکسازی: 10px padding, 12px rounded */
 .team13-btn-discovery-search {
@@ -406,8 +417,8 @@ body.team13-map {
   font-weight: 600;
   border: none;
   border-radius: 12px;
-  background: var(--team13-primary);
-  color: #fff;
+  background: var(--team13-gold);
+  color: #1b4332;
   cursor: pointer;
   transition: filter 0.2s ease;
 }
@@ -426,17 +437,20 @@ body.team13-map {
   transition: background 0.2s ease;
 }
 .team13-btn-discovery-clear-area:hover {
-  background: var(--team13-primary);
+  background: #2d5a4a;
 }
 
-/* Route panel: Route Card (start/dest group) + inputs full width, breathing room */
+/* No part outside a box: wrap floating content in .ui-card */
+.ui-card,
 .team13-route-card {
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 1rem;
   background: #fff;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
+.team13-route-card { padding: 15px; margin-bottom: 12px; }
 .team13-start-dest-wrap { padding-top: 0.25rem; }
 .team13-field-row { margin-bottom: 15px; }
 .team13-start-dest-wrap .team13-input-route,
@@ -489,17 +503,21 @@ body.team13-map {
   color: #1b4332;
   cursor: pointer;
 }
-/* Transport mode: horizontal row, pill buttons, white bg; active = Sage Green */
+/* Transport mode: 3-column grid inside route card, equal buttons */
 .team13-route-mode-wrap {
   margin-top: 0.75rem;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
   align-items: center;
-  justify-content: flex-start;
 }
-.team13-route-mode-label { font-size: 0.8125rem; color: #333; }
+.team13-route-mode-label {
+  grid-column: 1 / -1;
+  font-size: 0.8125rem;
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
 .transport-btn,
 .team13-route-mode-btn {
   padding: 0.45rem 0.9rem;
@@ -517,11 +535,11 @@ body.team13-map {
 }
 .transport-btn.active-transport,
 .team13-route-mode-btn.active {
-  background-color: #40916c !important;
-  color: #fff !important;
-  border-color: #40916c;
+  background-color: var(--team13-gold) !important;
+  color: #1b4332 !important;
+  border-color: rgba(27, 67, 50, 0.3);
   transform: scale(1.05);
-  box-shadow: 0 4px 10px rgba(64, 145, 108, 0.3);
+  box-shadow: 0 4px 10px rgba(251, 192, 45, 0.4);
 }
 .team13-events-city-input {
   width: 100%;
@@ -538,8 +556,8 @@ body.team13-map {
   font-weight: 600;
   border: none;
   border-radius: 12px;
-  background: var(--team13-primary);
-  color: #fff;
+  background: var(--team13-gold);
+  color: #1b4332;
   cursor: pointer;
   width: 100%;
 }
@@ -602,7 +620,7 @@ body.team13-map {
   left: 0;
   right: 0;
   height: 3px;
-  background: #40916c;
+  background: var(--team13-gold);
   width: 0;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -734,32 +752,35 @@ body.team13-map {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Route info floating card — only visible when route is active; hidden on Clear Route; z-index 1200 above map */
+/* Route info: Gold-themed floating card, bottom center */
 .team13-route-info,
 .route-info-card {
   position: absolute;
   bottom: 20px;
-  inset-inline-end: 20px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1200;
-  background: #fff;
-  padding: 15px;
-  border-radius: 10px;
+  background: linear-gradient(135deg, var(--team13-gold) 0%, var(--team13-gold-alt) 100%);
+  padding: 15px 20px;
+  border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  min-width: 200px;
+  min-width: 220px;
+  border: 1px solid rgba(27, 67, 50, 0.15);
 }
 .team13-route-info[hidden] {
   display: none !important;
 }
 .team13-route-info-title {
-  font-weight: 600;
+  font-weight: 700;
   color: #1b4332;
   margin-bottom: 0.5rem;
   font-size: 0.9375rem;
 }
 .team13-route-info-text {
   font-size: 0.875rem;
-  color: #333;
+  color: #1b4332;
   margin: 0.25rem 0;
+  font-weight: 500;
 }
 
 /* Leaflet popups: ensure above map layers (within map stacking context) */
@@ -1008,7 +1029,8 @@ body:not(.team13-map) .team13-footer .footer-links a:hover { text-decoration: un
   pointer-events: auto;
 }
 
-@media (max-width: 768px) {
+/* Mobile + Tablet: hamburger and right-side sidebar (up to 1024px) */
+@media (max-width: 1024px) {
   .team13-topbar {
     justify-content: space-between;
   }
@@ -1017,20 +1039,25 @@ body:not(.team13-map) .team13-footer .footer-links a:hover { text-decoration: un
   }
   .team13-btn-hamburger {
     display: flex;
+    position: absolute;
+    top: 50%;
+    right: 1rem;
+    transform: translateY(-50%);
   }
   .sidebar,
   .team13-sidebar {
     position: absolute;
-    left: 0;
+    left: auto;
+    right: 0;
     top: 0;
     width: 100%;
-    max-width: 100%;
+    max-width: 360px;
     height: 100vh;
     min-width: 0;
-    transform: translateX(-100%);
+    transform: translateX(100%);
     transition: transform 0.3s ease;
     z-index: 2000;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
   }
   .team13-sidebar.team13-sidebar-open,
   .team13-sidebar.active-sidebar {
@@ -1045,8 +1072,8 @@ body:not(.team13-map) .team13-footer .footer-links a:hover { text-decoration: un
     gap: 12px;
   }
   .team13-route-mode-wrap {
-    flex-wrap: wrap;
-    gap: 10px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
   }
   .team13-input-route,
   .team13-events-city-input,
