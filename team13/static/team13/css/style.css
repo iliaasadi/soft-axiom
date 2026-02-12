@@ -1,0 +1,893 @@
+/**
+ * Team13 — single stylesheet: map page (.team13-map) + list/detail pages.
+ * Use ONLY this file. No global div/span backgrounds; only specific classes get backgrounds.
+ */
+/* Global safety reset */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { color: #1b4332; }
+.sidebar, .team13-sidebar { color: white; background-color: #1b4332; }
+button {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.team13-btn-home:hover,
+.team13-btn-discovery-search:hover,
+.team13-btn-events-near-me:hover,
+.team13-btn-pick-map:hover,
+.team13-btn-my-location:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 145, 108, 0.3);
+}
+.team13-btn-center-me:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 14px rgba(64, 145, 108, 0.4);
+}
+.team13-route-mode-btn:hover {
+  transform: scale(1.05);
+}
+
+body.team13-map {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+:root {
+  --team13-dark: #1b4332;
+  --team13-primary: #40916c;
+  --team13-bg: #f8f9fa;
+  --team13-surface: #ffffff;
+  --team13-text: #1b4332;
+}
+
+/* App & main layout */
+.team13-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  width: 100%;
+  font-family: 'Vazirmatn', Tahoma, sans-serif;
+}
+.team13-main-wrap {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+.team13-topbar {
+  height: 3.5rem;
+  background: var(--team13-dark);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+/* Sidebar: fixed 350px, full height, flex column — no overlapping */
+.sidebar,
+.team13-sidebar {
+  width: 350px;
+  min-width: 350px;
+  height: 100vh;
+  flex-shrink: 0;
+  background: var(--team13-dark);
+  background-color: #1b4332;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -2px 0 10px rgba(0,0,0,0.15);
+  overflow-y: auto;
+  z-index: 1100;
+}
+.team13-sidebar,
+.team13-sidebar .team13-tabs,
+.team13-sidebar .team13-tab-btn { color: #fff; }
+.team13-sidebar .team13-tab-btn { background: transparent; background-color: transparent; }
+.team13-home-wrap { padding: 0.75rem 1rem; }
+.team13-btn-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--team13-primary);
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9375rem;
+}
+.team13-btn-home:hover { filter: brightness(1.1); }
+.team13-auth { padding: 0 1rem 0.5rem; }
+
+/* Map main: search top-center, map fill, Focus bottom-left */
+.team13-map-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.team13-map-search-wrap {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  max-width: 420px;
+  z-index: 1200;
+}
+.team13-search-input-wrap {
+  position: relative;
+  width: 100%;
+}
+.team13-search-input {
+  width: 100%;
+  padding: 0.65rem 2.5rem 0.65rem 1rem;
+  font-size: 0.9375rem;
+  border: 1px solid #ddd;
+  border-radius: 30px;
+  background: #fff;
+  color: #333;
+  outline: none;
+  box-sizing: border-box;
+}
+.team13-search-input::placeholder { color: #999; }
+.team13-search-input:focus {
+  border-color: var(--team13-primary);
+  box-shadow: 0 0 0 2px rgba(64, 145, 108, 0.25);
+}
+/* Search bar "X": ghost style — no green block; simple gray/green × icon */
+.team13-search-clear-btn.team13-btn-search-clear,
+.team13-btn-search-clear {
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 0.5rem;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  border-radius: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #6b7280;
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 1;
+  padding: 0;
+  box-shadow: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.team13-btn-search-clear:hover { color: #1b4332; }
+.team13-search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+
+/* Global z-index: map 1, sidebar 1100, popups & informers 1200+ */
+.team13-map-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.team13-btn-center-me {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 1rem;
+  z-index: 1000;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: var(--team13-primary);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.team13-btn-center-me:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 14px rgba(64, 145, 108, 0.4);
+}
+
+/* Panels wrap & panel visibility — 0.3s ease-in-out fade/slide */
+.team13-panels-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+/* Tab content: smooth horizontal slide (Discovery ↔ Route, etc.) */
+.team13-panel {
+  position: absolute;
+  inset: 0;
+  padding: 1rem 1rem 1rem 0.85rem;
+  background: var(--team13-bg);
+  overflow-y: auto;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(14px);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.team13-panel.active {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(0);
+}
+/* Panel content: light background — dark text so labels/headings are visible (no white-on-white) */
+.team13-panel { color: #1b4332; }
+.team13-panel .team13-field-label,
+.team13-panel .team13-discovery-point .team13-field-label,
+.team13-panel .team13-discovery-radius .team13-field-label,
+.team13-panel .team13-discovery-categories .team13-field-label {
+  color: #1b4332;
+  background: none;
+  background-color: transparent;
+}
+.team13-panel p, .team13-panel .text-sm { color: #333; }
+/* Panel inputs: light gray border, dark text and placeholder */
+.team13-panel .team13-input-route,
+.team13-panel .team13-events-city-input {
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #333;
+}
+.team13-panel .team13-input-route::placeholder,
+.team13-panel .team13-events-city-input::placeholder { color: #999; }
+.team13-panel .team13-route-mode-label { color: #333; }
+.team13-panel .team13-route-mode-btn {
+  color: #333;
+  border: 1px solid #ddd;
+  background: #fff;
+  background-color: #fff;
+}
+.team13-panel .team13-route-mode-btn[data-mode="driving"].active {
+  background: #40916c;
+  background-color: #40916c;
+  border-color: #40916c;
+  color: #fff;
+}
+.team13-panel .team13-btn-input-clear { color: #666; }
+.team13-panel .team13-btn-pick-map,
+.team13-panel .team13-btn-my-location {
+  border: 1px solid #ddd;
+  background: #f8f9fa;
+  color: #1b4332;
+}
+.team13-card {
+  background: var(--team13-surface);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Discovery: padding so slider/chips don't hit edges; consistent 12px buttons */
+.team13-discovery-point,
+.team13-discovery-radius,
+.team13-discovery-categories {
+  padding-inline-end: 0.25rem;
+}
+.team13-discovery-radius {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.team13-discovery-slider {
+  width: 100%;
+  height: 8px;
+  border-radius: 8px;
+  background: rgba(27, 67, 50, 0.15);
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0.35rem 0 0;
+}
+.team13-discovery-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--team13-primary);
+  cursor: pointer;
+}
+.team13-discovery-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 0.35rem;
+  padding: 10px 0;
+  padding-inline-end: 0;
+}
+.team13-discovery-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 10px 10px 14px;
+  font-size: 0.8125rem;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid rgba(27, 67, 50, 0.2);
+  cursor: pointer;
+}
+.team13-discovery-chip input {
+  margin-inline-start: 0.35rem;
+}
+.team13-btn-discovery {
+  padding: 10px 14px;
+  font-size: 0.8125rem;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid rgba(27, 67, 50, 0.3);
+  color: var(--team13-dark);
+  cursor: pointer;
+}
+.team13-btn-discovery:hover {
+  background: var(--team13-primary);
+  color: #fff;
+}
+/* جستجو + پاکسازی: 10px padding, 12px rounded */
+.team13-btn-discovery-search {
+  padding: 10px 1rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  background: var(--team13-primary);
+  color: #fff;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+.team13-btn-discovery-search:hover {
+  filter: brightness(1.08);
+}
+.team13-btn-discovery-clear-area {
+  padding: 10px 1rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  background: var(--team13-dark);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.team13-btn-discovery-clear-area:hover {
+  background: var(--team13-primary);
+}
+
+/* Route panel: Route Card (start/dest group) + inputs full width, breathing room */
+.team13-route-card {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #fff;
+}
+.team13-start-dest-wrap { padding-top: 0.25rem; }
+.team13-field-row { margin-bottom: 15px; }
+.team13-start-dest-wrap .team13-input-route,
+.team13-panel .team13-input-route,
+.team13-panel .team13-events-city-input { width: 100%; margin-bottom: 15px; }
+.team13-start-dest-wrap .team13-field-label,
+.team13-field-label { display: block; margin-bottom: 0.25rem; font-size: 0.875rem; background: none; background-color: transparent; }
+.team13-input-btn-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.team13-input-with-clear { position: relative; flex: 1; min-width: 0; }
+.team13-input-route {
+  width: 100%;
+  padding: 0.55rem 2.25rem 0.55rem 0.85rem;
+  font-size: 0.875rem;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: #fff;
+  color: #333;
+}
+.team13-btn-input-clear {
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 0.35rem;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.team13-btn-pick-map, .team13-btn-my-location {
+  padding: 0.45rem 0.65rem;
+  font-size: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: #f8f9fa;
+  color: #1b4332;
+  cursor: pointer;
+}
+.team13-route-mode-wrap {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+.team13-route-mode-label { font-size: 0.8125rem; color: #333; }
+.team13-route-mode-btn {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8125rem;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: #fff;
+  background-color: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.team13-route-mode-btn:hover {
+  transform: scale(1.05);
+}
+.team13-route-mode-btn.active { background: transparent; background-color: transparent; border-color: #ddd; color: #333; }
+.team13-route-mode-btn[data-mode="driving"].active { background: #40916c; background-color: #40916c; border-color: #40916c; color: #fff; }
+.team13-events-city-input {
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.875rem;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: #fff;
+  color: #333;
+}
+.team13-btn-events-near-me {
+  padding: 0.6rem 1rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  background: var(--team13-primary);
+  color: #fff;
+  cursor: pointer;
+  width: 100%;
+}
+.team13-btn-events-near-me:hover { filter: brightness(1.05); }
+.team13-discovery-point .team13-field-label, .team13-discovery-radius .team13-field-label, .team13-discovery-categories .team13-field-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.team13-btn-search-clear::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  margin-bottom: 6px;
+  padding: 5px 10px;
+  background: rgba(0, 0, 0, 0.78);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 400;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.team13-btn-search-clear:hover::after {
+  opacity: 1;
+}
+
+/* Sidebar tabs: gap 15px; sliding underline on active (::after 0→100% width) */
+.team13-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: center;
+  padding: 0 0.5rem 0 0;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.sidebar-tab.team13-tab-btn,
+.team13-tab-btn {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  background-color: transparent;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: opacity 0.3s ease-in-out;
+}
+.team13-tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #40916c;
+  width: 0;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[dir='rtl'] .team13-tab-btn::after {
+  left: auto;
+  right: 0;
+}
+.team13-tab-btn.active::after {
+  width: 100%;
+}
+.team13-tab-btn:hover {
+  opacity: 0.9;
+}
+.team13-tab-btn.active {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #fff;
+  border-bottom-color: transparent;
+  font-weight: 600;
+}
+
+/* Panel transition already set above (0.4s cubic-bezier) for horizontal slide */
+
+/* Discovery actions row: جستجو + پاکسازی + انصراف (10px padding) */
+.team13-discovery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding: 10px 0;
+}
+
+/* انصراف (Deselect): simple light-gray button — doesn't fight with green Search */
+.team13-btn-discovery-deselect {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 10px 14px;
+  font-size: 0.8125rem;
+  font-family: 'Vazirmatn', Tahoma, sans-serif;
+  font-weight: 500;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  background: #e5e7eb;
+  color: #4b5563;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.team13-btn-discovery-deselect:hover {
+  background: #d1d5db;
+  color: #374151;
+  border-color: #9ca3af;
+}
+
+/* Marker popups & route lines: fade-in when added */
+@keyframes team13PopupFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes team13PathFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.leaflet-popup-content-wrapper {
+  animation: team13PopupFadeIn 0.25s ease-out;
+}
+.leaflet-overlay-pane path {
+  animation: team13PathFadeIn 0.4s ease-out;
+}
+
+/* Live location indicator: pulsing blue dot, never block map clicks */
+.team13-user-location-marker,
+.user-location-marker {
+  pointer-events: none !important;
+  visibility: visible !important;
+}
+.team13-user-location-marker .team13-user-location-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  background: #2563eb;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.4);
+}
+.team13-user-location-marker .team13-user-location-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.4);
+  animation: team13LocationPulse 1.5s ease-out infinite;
+}
+@keyframes team13LocationPulse {
+  0% { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* Toast / notification container — top edge (inset-inline-end), slide down, z-index 1200+ */
+.team13-toast {
+  position: absolute;
+  top: 1rem;
+  inset-inline-end: 1rem;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 320px;
+  pointer-events: none;
+}
+.team13-toast-item {
+  padding: 0.65rem 1rem;
+  background: rgba(27, 67, 50, 0.9);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: team13ToastSlideDown 0.3s ease-out;
+  pointer-events: auto;
+}
+@keyframes team13ToastSlideDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Route info floating card — only visible when route is active; hidden on Clear Route */
+.team13-route-info,
+.route-info-card {
+  position: absolute;
+  bottom: 20px;
+  inset-inline-end: 20px;
+  z-index: 1001;
+  background: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  min-width: 200px;
+}
+.team13-route-info[hidden] {
+  display: none !important;
+}
+.team13-route-info-title {
+  font-weight: 600;
+  color: #1b4332;
+  margin-bottom: 0.5rem;
+  font-size: 0.9375rem;
+}
+.team13-route-info-text {
+  font-size: 0.875rem;
+  color: #333;
+  margin: 0.25rem 0;
+}
+
+/* Leaflet popups: ensure above map layers (within map stacking context) */
+.leaflet-popup-pane { z-index: 1200; }
+
+/* ========== List/Detail pages (place_detail, places_list, routes, events, emergency) ========== */
+/* Scoped so map page (body.team13-map) is not affected */
+:root {
+  --forest-green: #2E7D32;
+  --leaf-green: #43A047;
+  --persian-gold: #FFB300;
+  --bg-light: #F1F8E9;
+  --bg-white: #FFFFFF;
+  --text-dark: #1A1A1A;
+  --text-muted: #5a5a5a;
+  --border-color: #C8E6C9;
+  --shadow: 0 2px 8px rgba(46, 125, 50, 0.12);
+}
+body:not(.team13-map) {
+  font-family: "Vazirmatn", sans-serif;
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+  direction: rtl;
+  padding: 20px;
+  margin: 0;
+  text-align: right;
+}
+body:not(.team13-map) .container { max-width: 900px; margin: 0 auto; }
+body:not(.team13-map) h1 { color: var(--forest-green); font-size: 1.75rem; margin-bottom: 0.5rem; }
+body:not(.team13-map) h2 { color: var(--leaf-green); font-size: 1.25rem; margin: 1.25rem 0 0.75rem; }
+body:not(.team13-map) h3 { font-size: 1rem; color: var(--text-muted); margin: 0.5rem 0; }
+
+body:not(.team13-map) nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 20px 0;
+}
+body:not(.team13-map) nav a {
+  padding: 10px 18px;
+  background-color: var(--forest-green);
+  color: white;
+  text-decoration: none;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+body:not(.team13-map) nav a:hover { background-color: var(--leaf-green); }
+
+body:not(.team13-map) .back-btn {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: var(--forest-green);
+  color: white;
+  text-decoration: none;
+  border-radius: 50px;
+  font-weight: bold;
+}
+body:not(.team13-map) .back-btn:hover { background-color: var(--leaf-green); }
+body:not(.team13-map) .btn-gold {
+  background-color: var(--persian-gold);
+  color: #1A1A1A;
+}
+body:not(.team13-map) .btn-gold:hover { filter: brightness(1.1); }
+
+body:not(.team13-map) .card-list { display: flex; flex-direction: column; gap: 14px; margin: 20px 0; }
+body:not(.team13-map) .card {
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 18px 22px;
+  box-shadow: var(--shadow);
+  text-align: right;
+}
+body:not(.team13-map) .card a { color: var(--forest-green); font-weight: 600; text-decoration: none; }
+body:not(.team13-map) .card a:hover { text-decoration: underline; }
+body:not(.team13-map) .card .meta { color: var(--text-muted); font-size: 0.9rem; margin-top: 6px; }
+body:not(.team13-map) .card .type-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  background: rgba(46, 125, 50, 0.2);
+  color: var(--forest-green);
+  margin-left: 8px;
+}
+
+body:not(.team13-map) .detail-box {
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 20px 0;
+  box-shadow: var(--shadow);
+  text-align: right;
+}
+body:not(.team13-map) .detail-box .address { color: var(--text-muted); margin: 10px 0; }
+body:not(.team13-map) .amenities-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+body:not(.team13-map) .amenities-list span {
+  background: var(--bg-light);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+body:not(.team13-map) .rating-stars { color: var(--persian-gold); }
+body:not(.team13-map) .comments-list { margin-top: 16px; }
+body:not(.team13-map) .comment-item {
+  border-bottom: 1px solid var(--border-color);
+  padding: 12px 0;
+  font-size: 0.95rem;
+}
+body:not(.team13-map) .comment-item:last-child { border-bottom: none; }
+
+body:not(.team13-map) .form-group { margin: 14px 0; text-align: right; }
+body:not(.team13-map) .form-group label { display: block; margin-bottom: 6px; font-weight: 600; }
+body:not(.team13-map) .form-group input,
+body:not(.team13-map) .form-group select {
+  width: 100%;
+  max-width: 320px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+}
+body:not(.team13-map) form button[type="submit"],
+body:not(.team13-map) .btn-submit {
+  padding: 10px 24px;
+  background-color: var(--forest-green);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+}
+body:not(.team13-map) form button[type="submit"]:hover,
+body:not(.team13-map) .btn-submit:hover { background-color: var(--leaf-green); }
+
+body:not(.team13-map) .result-box {
+  background: var(--bg-white);
+  border: 2px solid var(--forest-green);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+}
+body:not(.team13-map) .result-box .distance,
+body:not(.team13-map) .result-box .eta { font-size: 1.1rem; font-weight: 600; color: var(--forest-green); }
+body:not(.team13-map) .emergency-item,
+body:not(.team13-map) .route-amenities { margin: 10px 0; padding: 10px; background: var(--bg-light); border-radius: 8px; }
+body:not(.team13-map) hr { border: none; border-top: 1px solid var(--border-color); margin: 24px 0; width: 80%; margin-right: 10%; }
+
+body:not(.team13-map) .auth-header {
+  margin-bottom: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+body:not(.team13-map) .auth-header .back-btn { margin-top: 0; }
+body:not(.team13-map) .auth-header .auth-user-name { color: var(--forest-green); font-weight: 600; }
+body:not(.team13-map) .auth-header .auth-btn-small { padding: 6px 14px; font-size: 0.9rem; margin: 0 4px; }
+
+body:not(.team13-map) .team13-footer {
+  margin-top: 40px;
+  padding: 24px 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+body:not(.team13-map) .team13-footer .footer-text { margin: 8px 0; }
+body:not(.team13-map) .team13-footer .footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+body:not(.team13-map) .team13-footer .footer-links a {
+  color: var(--forest-green);
+  text-decoration: none;
+}
+body:not(.team13-map) .team13-footer .footer-links a:hover { text-decoration: underline; }
+
+@media (max-width: 600px) {
+  body:not(.team13-map) { padding: 12px; }
+  body:not(.team13-map) .container { max-width: 100%; }
+  body:not(.team13-map) nav { gap: 8px; }
+  body:not(.team13-map) nav a { padding: 8px 14px; font-size: 0.9rem; }
+}

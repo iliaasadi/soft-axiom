@@ -224,6 +224,8 @@ def event_list(request):
             "event_id": str(e.event_id),
             "city": e.city,
             "address": e.address,
+            "latitude": e.latitude,
+            "longitude": e.longitude,
             "start_at": e.start_at,
             "end_at": e.end_at,
             "start_at_iso": e.start_at.isoformat(),
@@ -239,8 +241,10 @@ def event_list(request):
                 {
                     "event_id": x["event_id"],
                     "city": x["city"],
+                    "latitude": x.get("latitude"),
+                    "longitude": x.get("longitude"),
                     "start_at": x["start_at_iso"],
-                    "end_at": x["end_at_iso"],
+                    "end_at": x.get("end_at_iso"),
                     "title_fa": x["title_fa"],
                 }
                 for x in events

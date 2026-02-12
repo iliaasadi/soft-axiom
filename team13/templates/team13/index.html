@@ -1,34 +1,303 @@
 {% load static %}
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>امکانات و حمل‌ونقل — گروه Axiom (تیم ۱۳)</title>
-    <link rel="stylesheet" href="{% static 'team13/styles/style.css' %}">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div class="container">
-        <h1>سرویس امکانات و حمل‌ونقل</h1>
-        <h3>Facilities & Transportation — گروه Axiom (تیم ۱۳)</h3>
-        {% include "team13/_auth_header.html" %}
-        <hr>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>سامانه جامع آکسیوم — امکانات و حمل‌ونقل</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap"
+      rel="stylesheet"
+    />
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <!-- Leaflet CSS (v1.9.4) -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="{% static 'team13/css/style.css' %}" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              team13: { dark: "#1b4332", primary: "#40916c", bg: "#f8f9fa" },
+            },
+            fontFamily: { sans: ["Vazirmatn", "Tahoma", "sans-serif"] },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body
+    class="team13-map font-sans antialiased"
+    style="font-family: &quot;Vazirmatn&quot;, Tahoma, sans-serif"
+  >
+    <div id="team13-app" class="team13-app">
+      <!-- Top bar -->
+      <header class="team13-topbar">
+        سامانه جامع آکسیوم
+      </header>
 
-        <nav>
-            <a href="{% url 'team13:place_list' %}">مکان‌ها (POI)</a>
-            <a href="{% url 'team13:event_list' %}">رویدادها</a>
-            <a href="{% url 'team13:routes' %}">مسیریابی / ETA</a>
-            <a href="{% url 'team13:emergency' %}">مراکز امدادی نزدیک</a>
-        </nav>
-
-        <div class="detail-box">
-            <p>مشاهده مکان‌ها (هتل، رستوران، موزه، بیمارستان، تفریحی)، رویدادها، مسیریابی و زمان رسیدن (ETA)، امکانات روی مسیر، و نزدیک‌ترین مراکز امدادی در حالت اضطراری.</p>
-            <p>از لینک‌های بالا استفاده کنید. برای API خروجی JSON، پارامتر <code>?format=json</code> را به آدرس اضافه کنید.</p>
-        </div>
-
-        <a href="/" class="back-btn">بازگشت به داشبورد اصلی</a>
-        {% include "team13/_footer.html" %}
+      <div id="team13-main-wrap" class="team13-main-wrap">
+        <!-- Sidebar: 350px desktop; drawer on mobile, toggled by hamburger -->
+        <aside id="team13-sidebar" class="team13-sidebar" aria-label="منوی کناری">
+          <div class="team13-home-wrap">
+            <button type="button" id="team13-btn-home" class="team13-btn-home team13-btn-primary" title="Back to Home" aria-label="بازگشت به خانه">
+              <span class="team13-btn-home-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span>
+              <span class="team13-btn-home-label">بازگشت به خانه</span>
+            </button>
+          </div>
+          <div class="team13-auth">
+            {% include "team13/_auth_header.html" %}
+          </div>
+          <div class="team13-tabs flex border-b" role="tablist">
+            <button
+              type="button"
+              class="sidebar-tab team13-tab-btn active flex-1"
+              data-tab="places"
+              aria-selected="true"
+            >
+              امکانات
+            </button>
+            <button
+              type="button"
+              class="sidebar-tab team13-tab-btn flex-1"
+              data-tab="events"
+              aria-selected="false"
+            >
+              رویدادها
+            </button>
+            <button
+              type="button"
+              class="sidebar-tab team13-tab-btn flex-1"
+              data-tab="routes"
+              aria-selected="false"
+            >
+              مسیر
+            </button>
+            <button
+              type="button"
+              class="sidebar-tab team13-tab-btn flex-1"
+              data-tab="discovery"
+              aria-selected="false"
+            >
+              اطراف من
+            </button>
+          </div>
+          <div class="team13-panels-wrap flex-1 overflow-hidden flex flex-col min-h-0">
+            <section
+              id="panel-places"
+              class="team13-panel active"
+              role="tabpanel"
+            >
+              <div class="team13-card team13-welcome-card mb-3">
+                <p class="font-semibold text-[#1b4332] mb-1">خوش آمدید</p>
+                <p class="text-sm text-gray-600">
+                  مکان‌ها، رویدادها و مسیریابی را از اینجا انتخاب کنید.
+                </p>
+              </div>
+              <p class="text-sm text-gray-600 mb-3">
+                لیست مکان‌ها (هتل، رستوران، موزه، بیمارستان، تفریحی).
+              </p>
+              <div id="places-list" class="space-y-2"></div>
+            </section>
+            <section
+              id="panel-events"
+              class="team13-panel team13-panel-events bg-[#f8f9fa]"
+              role="tabpanel"
+            >
+              <p class="text-sm text-gray-600 mb-3">رویدادها.</p>
+              <div class="team13-events-city-wrap mb-3">
+                <label class="team13-field-label team13-block mb-1" for="team13-events-city-input">انتخاب شهر</label>
+                <input type="text" id="team13-events-city-input" class="team13-events-city-input" placeholder="نام شهر را وارد کنید" autocomplete="off" />
+              </div>
+              <button type="button" id="team13-events-near-me" class="team13-btn-events-near-me">رویدادهای اطراف من</button>
+              <div id="events-list" class="space-y-2 mt-3"></div>
+            </section>
+            <section
+              id="panel-routes"
+              class="team13-panel bg-[#f8f9fa]"
+              role="tabpanel"
+            >
+              <p class="text-sm text-gray-600 mb-3">مسیریابی و مراکز امدادی.</p>
+              <div id="team13-start-dest-wrap" class="team13-start-dest-wrap team13-route-card">
+                <div class="team13-field-row">
+                  <label class="team13-field-label" for="team13-input-start">مبدا</label>
+                  <div class="team13-input-btn-row">
+                    <div class="team13-input-with-clear">
+                      <input type="text" id="team13-input-start" class="team13-input-route" placeholder="آدرس یا انتخاب از نقشه" autocomplete="off" />
+                      <button type="button" id="team13-clear-start" class="team13-btn-input-clear" aria-label="حذف مبدا" title="حذف">×</button>
+                    </div>
+                    <button type="button" id="team13-btn-pick-start" class="team13-btn-pick-map" title="انتخاب از روی نقشه">انتخاب از روی نقشه</button>
+                    <button type="button" id="team13-btn-my-location" class="team13-btn-my-location" title="موقعیت من">موقعیت من</button>
+                  </div>
+                  <div id="team13-start-results" class="team13-autocomplete-results" hidden></div>
+                </div>
+                <div class="team13-field-row">
+                  <label class="team13-field-label" for="team13-input-dest">مقصد</label>
+                  <div class="team13-input-btn-row">
+                    <div class="team13-input-with-clear">
+                      <input type="text" id="team13-input-dest" class="team13-input-route" placeholder="آدرس یا انتخاب از نقشه" autocomplete="off" />
+                      <button type="button" id="team13-clear-dest" class="team13-btn-input-clear" aria-label="حذف مقصد" title="حذف">×</button>
+                    </div>
+                    <button type="button" id="team13-btn-pick-dest" class="team13-btn-pick-map" title="انتخاب از روی نقشه">انتخاب از روی نقشه</button>
+                  </div>
+                  <div id="team13-dest-results" class="team13-autocomplete-results" hidden></div>
+                </div>
+                <div id="team13-route-mode-wrap" class="team13-route-mode-wrap">
+                  <span class="team13-route-mode-label">نوع مسیر:</span>
+                  <button type="button" class="team13-route-mode-btn active" data-mode="driving">خودرو</button>
+                  <button type="button" class="team13-route-mode-btn" data-mode="walking">پیاده</button>
+                  <button type="button" class="team13-route-mode-btn" data-mode="bicycle">دوچرخه</button>
+                </div>
+              </div>
+              <div id="route-info-box" class="team13-route-info-box mb-3">
+                <p class="team13-route-info-box-title">جزئیات مسیر</p>
+                <div id="route-info-box-content" class="team13-route-info-box-content text-sm text-gray-600">
+                  مسیری را از نقشه یا جستجو انتخاب کنید.
+                </div>
+                <button type="button" id="team13-btn-clear-path" class="team13-btn-clear-path" style="display: none;">پاک کردن مسیر</button>
+              </div>
+              <div id="routes-emergency-content" class="space-y-2">
+                <button type="button" id="team13-btn-nearest-hospital" class="team13-emergency-btn">نزدیک‌ترین بیمارستان</button>
+                <button type="button" id="team13-btn-nearest-fire" class="team13-emergency-btn">نزدیک‌ترین آتش‌نشانی</button>
+              </div>
+            </section>
+            <section
+              id="panel-discovery"
+              class="team13-panel team13-discovery-panel bg-[#f8f9fa]"
+              role="tabpanel"
+            >
+              <p class="text-sm text-gray-600 mb-3">جستجو در محدوده (متراژ و دسته‌بندی).</p>
+              <div class="team13-discovery-point mb-3">
+                <span class="team13-field-label team13-block mb-1">نقطه مرکز</span>
+                <div class="team13-discovery-btns">
+                  <button type="button" id="team13-discovery-my-location" class="team13-btn-discovery">استفاده از موقعیت من</button>
+                  <button type="button" id="team13-discovery-pick-map" class="team13-btn-discovery">انتخاب از روی نقشه</button>
+                </div>
+              </div>
+              <div class="team13-discovery-radius mb-3">
+                <label class="team13-field-label team13-block mb-1" for="team13-discovery-radius">شعاع: <span id="team13-discovery-radius-value">2</span> کیلومتر</label>
+                <input type="range" id="team13-discovery-radius" class="team13-discovery-slider" min="0.5" max="10" step="0.5" value="2" />
+              </div>
+              <div class="team13-discovery-categories mb-3">
+                <span class="team13-field-label team13-block mb-1">دسته‌بندی</span>
+                <div class="team13-discovery-chips">
+                  <label class="team13-discovery-chip"><input type="checkbox" name="discovery-cat" value="food" /> رستوران</label>
+                  <label class="team13-discovery-chip"><input type="checkbox" name="discovery-cat" value="hotel" /> هتل</label>
+                  <label class="team13-discovery-chip"><input type="checkbox" name="discovery-cat" value="hospital" /> بیمارستان</label>
+                  <label class="team13-discovery-chip"><input type="checkbox" name="discovery-cat" value="museum" /> موزه</label>
+                  <label class="team13-discovery-chip"><input type="checkbox" name="discovery-cat" value="entertainment" /> تفریحی</label>
+                </div>
+              </div>
+              <div class="team13-discovery-actions">
+                <button type="button" id="team13-discovery-search" class="team13-btn-discovery-search">جستجو در این محدوده</button>
+                <button type="button" id="team13-discovery-clear-area" class="team13-btn-discovery-clear-area">پاکسازی محدوده</button>
+                <button type="button" id="team13-discovery-deselect" class="team13-btn-discovery-deselect" title="حذف دایره و نشانگرها">انصراف</button>
+              </div>
+            </section>
+          </div>
+        </aside>
+        <!-- Overlay when sidebar open on mobile (tap to close) -->
+        <div id="team13-sidebar-overlay" class="team13-sidebar-overlay" aria-hidden="true"></div>
+        <!-- Hamburger: visible on mobile/tablet to open sidebar -->
+        <button type="button" id="team13-btn-hamburger" class="team13-btn-hamburger" aria-label="منو" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+        <!-- Main: map (flex-grow) -->
+        <main class="team13-map-main">
+          <div class="team13-map-search-wrap">
+            <div class="team13-search-input-wrap">
+              <input type="text" id="team13-search-input" class="team13-search-input" placeholder="جستجو مکان یا آدرس..." autocomplete="off" />
+              <button type="button" id="team13-clear-search" class="team13-btn-search-clear team13-search-clear-btn" aria-label="پاک کردن" data-tooltip="پاک کردن">×</button>
+            </div>
+            <div id="team13-search-results" class="team13-search-results" hidden></div>
+          </div>
+          <div id="team13-route-info" class="team13-route-info" hidden>
+            <p class="team13-route-info-title">مسیر و زمان رسیدن</p>
+            <p id="team13-route-distance" class="team13-route-info-text"></p>
+            <p id="team13-route-eta" class="team13-route-info-text"></p>
+          </div>
+          <div id="team13-route-loading" class="team13-route-loading" hidden>
+            <span class="team13-spinner"></span>
+            <span>در حال بارگذاری مسیر...</span>
+          </div>
+          <div
+            id="map-container"
+            class="team13-map-wrap absolute inset-0"
+          ></div>
+          <button type="button" id="team13-btn-center-me" class="team13-btn-center-me" aria-label="مکان من" title="مرکز روی من">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          </button>
+          <div id="team13-toast" class="team13-toast" aria-live="polite"></div>
+        </main>
+      </div>
     </div>
-</body>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <!-- Required for Map.ir route geometry decoding (polyline.decode) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox-polyline/1.1.1/polyline.js"></script>
+    <script src="{% static 'team13/js/api_client.js' %}"></script>
+    <script src="{% static 'team13/js/map_init.js' %}"></script>
+    <script src="{% static 'team13/js/map_data.js' %}"></script>
+    <script>
+      (function () {
+        var tabs = document.querySelectorAll(".team13-tab-btn");
+        var panels = document.querySelectorAll(".team13-panel");
+        tabs.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var tabId = this.getAttribute("data-tab");
+            tabs.forEach(function (t) {
+              t.classList.remove("active");
+              t.setAttribute("aria-selected", "false");
+            });
+            panels.forEach(function (p) {
+              p.classList.remove("active");
+            });
+            this.classList.add("active");
+            this.setAttribute("aria-selected", "true");
+            var panel = document.getElementById("panel-" + tabId);
+            if (panel) panel.classList.add("active");
+            if (tabId === "events" && window.Team13MapData && typeof window.Team13MapData.onEventsTabActivated === "function") {
+              window.Team13MapData.onEventsTabActivated();
+            }
+          });
+        });
+        var sidebar = document.getElementById("team13-sidebar");
+        var overlay = document.getElementById("team13-sidebar-overlay");
+        var hamburger = document.getElementById("team13-btn-hamburger");
+        function closeSidebar() {
+          if (sidebar) {
+            sidebar.classList.remove("team13-sidebar-open");
+            sidebar.classList.remove("active");
+          }
+          if (overlay) overlay.classList.remove("team13-sidebar-overlay-visible");
+          if (hamburger) hamburger.setAttribute("aria-expanded", "false");
+        }
+        function openSidebar() {
+          if (sidebar) {
+            sidebar.classList.add("team13-sidebar-open");
+            sidebar.classList.add("active");
+          }
+          if (overlay) overlay.classList.add("team13-sidebar-overlay-visible");
+          if (hamburger) hamburger.setAttribute("aria-expanded", "true");
+        }
+        function toggleSidebar() {
+          if (sidebar && (sidebar.classList.contains("team13-sidebar-open") || sidebar.classList.contains("active"))) closeSidebar();
+          else openSidebar();
+        }
+        if (hamburger) hamburger.addEventListener("click", toggleSidebar);
+        if (overlay) overlay.addEventListener("click", closeSidebar);
+      })();
+    </script>
+  </body>
 </html>
