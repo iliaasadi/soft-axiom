@@ -163,24 +163,26 @@ body.team13-map {
   background: #fff;
   border-radius: 12px;
   max-width: 400px;
-  width: 100%;
+  width: 90%;
   max-height: 90vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  padding: 24px !important;
+  box-sizing: border-box;
 }
 .team13-modal-title {
-  margin: 0;
-  padding: 20px 20px 15px;
+  margin: 0 0 20px 0;
+  padding: 0 0 15px 0;
   font-size: 1.25rem;
   color: #1b4332;
   text-align: center;
   border-bottom: 1px solid #eee;
 }
 .team13-modal-text {
-  margin: 0;
-  padding: 16px 20px;
+  margin: 0 0 12px 0;
+  padding: 0;
   font-size: 0.9375rem;
   color: #4b5563;
   line-height: 1.5;
@@ -189,8 +191,15 @@ body.team13-map {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 16px 20px 20px;
+  padding: 16px 0 0;
   justify-content: flex-end;
+  align-items: center;
+}
+.team13-modal-actions .team13-btn-modal-close,
+.team13-modal-actions .team13-btn-login-modal,
+.team13-modal-actions .team13-btn-save-favorite,
+.team13-modal-actions .team13-btn-yellow {
+  width: auto !important;
 }
 .team13-btn-login-modal {
   display: inline-block;
@@ -214,7 +223,7 @@ body.team13-map {
   background: #f3f4f6;
 }
 .team13-form-add-favorite {
-  padding: 16px 20px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -223,12 +232,21 @@ body.team13-map {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin-bottom: 12px;
+}
+.team13-form-add-favorite .team13-form-row:last-of-type {
+  margin-bottom: 0;
 }
 .team13-form-add-favorite .team13-input-route {
   padding: 8px 12px;
+  margin-bottom: 12px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 0.9375rem;
+  box-sizing: border-box;
+}
+.team13-form-add-favorite .team13-form-row .team13-input-route {
+  margin-bottom: 0;
 }
 .team13-favorite-icon-pick {
   display: flex;
@@ -281,14 +299,24 @@ body.team13-map {
   cursor: pointer;
 }
 .team13-btn-add-favorite:hover { filter: brightness(1.05); }
+/* Modal labels: RTL alignment and spacing */
+.team13-modal .team13-field-label,
+.team13-modal .team13-favorite-step-label {
+  margin-right: 5px;
+  margin-bottom: 8px;
+}
 .team13-favorite-step-label { margin-bottom: 12px; }
 .team13-favorite-picker-options {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin: 0 10px;
 }
 .team13-favorite-picker-btn {
-  width: 100% !important;
+  width: calc(100% - 20px) !important;
+  max-width: 100%;
+  margin-left: 10px;
+  margin-right: 10px;
   padding: 10px 16px;
   margin-bottom: 12px;
   border: none;
@@ -298,23 +326,35 @@ body.team13-map {
   font-size: 0.9375rem;
   box-sizing: border-box;
 }
+.team13-favorite-picker-options .team13-favorite-picker-btn {
+  width: 100% !important;
+  margin-left: 0;
+  margin-right: 0;
+}
 .team13-favorite-picker-options .team13-favorite-picker-btn:last-child {
   margin-bottom: 0;
 }
-.team13-modal-route-start .team13-favorite-picker-btn {
-  width: 100% !important;
+.team13-modal-route-start .team13-favorite-picker-options .team13-favorite-picker-btn {
   margin-bottom: 12px;
-  box-sizing: border-box;
+}
+.team13-modal-route-start .team13-favorite-picker-options .team13-favorite-picker-btn:last-child {
+  margin-bottom: 0;
 }
 .team13-favorite-search-wrap {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  margin-bottom: 12px;
 }
 .team13-favorite-search-wrap .team13-input-route {
   padding: 8px 12px;
+  margin-bottom: 12px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
+  box-sizing: border-box;
+}
+.team13-favorite-search-wrap .team13-input-route:last-of-type {
+  margin-bottom: 0;
 }
 .team13-favorite-search-results {
   max-height: 160px;
@@ -422,7 +462,7 @@ body.team13-map {
   flex-shrink: 0;
 }
 .team13-favorite-item-remove:hover { filter: brightness(1.1); }
-.team13-favorite-details-content { padding: 0 20px 16px; }
+.team13-favorite-details-content { padding: 0 0 16px 0; }
 .team13-detail-row { margin: 0 0 10px 0; font-size: 0.9375rem; color: #374151; line-height: 1.5; }
 .team13-detail-row:last-child { margin-bottom: 0; }
 
