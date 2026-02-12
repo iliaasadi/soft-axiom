@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.http import url_has_allowed_host_and_scheme
 from urllib.parse import quote
+from django.db.models import Avg
 from django.views.decorators.http import require_GET, require_POST
 from core.auth import api_login_required
 
@@ -84,7 +85,17 @@ def place_list(request):
     city = request.GET.get("city")
     if city:
         qs = qs.filter(city__icontains=city)
-    places_qs = qs[:100]
+    places_qs = list(qs[:100])
+    place_ids = [p.place_id for p in places_qs]
+    rating_rows = (
+        Comment.objects.filter(
+            target_type=Comment.TargetType.PLACE,
+            target_id__in=place_ids,
+        )
+        .values("target_id")
+        .annotate(avg_rating=Avg("rating"))
+    )
+    rating_by_place = {str(r["target_id"]): round(float(r["avg_rating"]), 1) for r in rating_rows}
 
     places = []
     for p in places_qs:
@@ -100,6 +111,7 @@ def place_list(request):
             "longitude": p.longitude,
             "name_fa": trans_fa.name if trans_fa else "",
             "name_en": trans_en.name if trans_en else "",
+            "rating": rating_by_place.get(str(p.place_id)),
         })
 
     if _wants_json(request):

@@ -36,6 +36,7 @@
   <body
     class="team13-map font-sans antialiased"
     style="font-family: &quot;Vazirmatn&quot;, Tahoma, sans-serif"
+    data-user-logged-in="{% if team13_user %}true{% else %}false{% endif %}"
   >
     <div id="team13-app" class="team13-app">
       <div id="team13-main-wrap" class="team13-main-wrap">
@@ -52,6 +53,7 @@
               <a href="{% url 'auth' %}?next={{ request.path }}" class="auth-btn-small">ورود</a>
               <a href="{% url 'signup' %}" class="auth-btn-small btn-gold">ثبت‌نام</a>
             {% endif %}
+            <button type="button" id="team13-btn-favorites" class="team13-btn-favorites" title="علاقه‌مندی‌ها" aria-label="علاقه‌مندی‌ها">⭐</button>
           </div>
           <div class="team13-sidebar-header">
             <div class="team13-home-wrap">
@@ -65,16 +67,8 @@
             <button
               type="button"
               class="sidebar-tab team13-tab-btn active flex-1"
-              data-tab="places"
-              aria-selected="true"
-            >
-              امکانات
-            </button>
-            <button
-              type="button"
-              class="sidebar-tab team13-tab-btn flex-1"
               data-tab="events"
-              aria-selected="false"
+              aria-selected="true"
             >
               رویدادها
             </button>
@@ -97,24 +91,8 @@
           </div>
           <div class="team13-panels-wrap flex-1 overflow-hidden flex flex-col min-h-0">
             <section
-              id="panel-places"
-              class="team13-panel active"
-              role="tabpanel"
-            >
-              <div class="team13-card team13-welcome-card mb-3">
-                <p class="font-semibold text-[#1b4332] mb-1">خوش آمدید</p>
-                <p class="text-sm text-gray-600">
-                  مکان‌ها، رویدادها و مسیریابی را از اینجا انتخاب کنید.
-                </p>
-              </div>
-              <p class="text-sm text-gray-600 mb-3">
-                لیست مکان‌ها (هتل، رستوران، موزه، بیمارستان، تفریحی).
-              </p>
-              <div id="places-list" class="space-y-2"></div>
-            </section>
-            <section
               id="panel-events"
-              class="team13-panel team13-panel-events bg-[#f8f9fa]"
+              class="team13-panel team13-panel-events bg-[#f8f9fa] active"
               role="tabpanel"
             >
               <p class="text-sm text-gray-600 mb-3">رویدادها.</p>
@@ -217,6 +195,116 @@
         </aside>
         <!-- Overlay when sidebar open on mobile (tap to close) -->
         <div id="team13-sidebar-overlay" class="team13-sidebar-overlay" aria-hidden="true"></div>
+
+        <!-- Favorites: login gate (inside add modal when not logged in) - no separate modal -->
+
+        <!-- Favorites: list modal (primary view when Star clicked and logged in) -->
+        <div id="team13-modal-favorites-list" class="team13-modal-overlay" role="dialog" aria-labelledby="team13-modal-favorites-list-title" aria-modal="true" hidden>
+          <div class="team13-modal team13-modal-favorites-list">
+            <h2 id="team13-modal-favorites-list-title" class="team13-modal-title">علاقه‌مندی‌ها</h2>
+            <div class="team13-favorites-list-actions">
+              <button type="button" id="team13-btn-add-new-favorite" class="team13-btn-add-favorite team13-btn-yellow">افزودن مکان جدید</button>
+              <button type="button" class="team13-btn-modal-close" data-close="team13-modal-favorites-list">بستن</button>
+            </div>
+            <div id="team13-favorites-list" class="team13-favorites-list"></div>
+          </div>
+        </div>
+
+        <!-- Favorites: Route to Here — choose start point -->
+        <div id="team13-modal-route-start" class="team13-modal-overlay" role="dialog" aria-labelledby="team13-modal-route-start-title" aria-modal="true" hidden>
+          <div class="team13-modal team13-modal-route-start">
+            <h2 id="team13-modal-route-start-title" class="team13-modal-title">مسیریابی — انتخاب مبدا</h2>
+            <p class="team13-modal-text">مبدا را انتخاب کنید:</p>
+            <div class="team13-favorite-picker-options">
+              <button type="button" id="team13-route-start-current" class="team13-favorite-picker-btn team13-btn-yellow">موقعیت فعلی</button>
+              <button type="button" id="team13-route-start-map" class="team13-favorite-picker-btn team13-btn-yellow">انتخاب از نقشه</button>
+              <div class="team13-favorite-search-wrap">
+                <label class="team13-field-label" for="team13-route-start-search">جستجوی آدرس مبدا</label>
+                <input type="text" id="team13-route-start-search" class="team13-input-route" placeholder="آدرس مبدا..." autocomplete="off" />
+                <div id="team13-route-start-results" class="team13-favorite-search-results" hidden></div>
+              </div>
+            </div>
+            <div class="team13-modal-actions">
+              <button type="button" class="team13-btn-modal-close" data-close="team13-modal-route-start">انصراف</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Favorites: Details (Info) modal -->
+        <div id="team13-modal-favorite-details" class="team13-modal-overlay" role="dialog" aria-labelledby="team13-modal-favorite-details-title" aria-modal="true" hidden>
+          <div class="team13-modal team13-modal-favorite-details">
+            <h2 id="team13-modal-favorite-details-title" class="team13-modal-title">جزئیات</h2>
+            <div id="team13-favorite-details-content" class="team13-favorite-details-content"></div>
+            <div class="team13-modal-actions">
+              <button type="button" class="team13-btn-modal-close" data-close="team13-modal-favorite-details">بستن</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Favorites: Add Favorite modal (login gate + 3-way location picker + customization) -->
+        <div id="team13-modal-add-favorite" class="team13-modal-overlay" role="dialog" aria-labelledby="team13-modal-add-favorite-title" aria-modal="true" hidden>
+          <div class="team13-modal team13-modal-add-favorite">
+            <h2 id="team13-modal-add-favorite-title" class="team13-modal-title">افزودن علاقه‌مندی</h2>
+
+            <div id="team13-favorite-login-gate" class="team13-favorite-step">
+              <p class="team13-modal-text">Please log in to save favorites.</p>
+              <div class="team13-modal-actions">
+                <a href="{% url 'auth' %}?next={{ request.path }}" class="team13-btn-login-modal team13-btn-yellow">ورود</a>
+                <button type="button" class="team13-btn-modal-close" data-close="team13-modal-add-favorite">بستن</button>
+              </div>
+            </div>
+
+            <div id="team13-favorite-step-picker" class="team13-favorite-step" style="display: none;">
+              <p class="team13-modal-text team13-favorite-step-label">انتخاب مکان را مشخص کنید:</p>
+              <div class="team13-favorite-picker-options">
+                <button type="button" id="team13-favorite-btn-current" class="team13-favorite-picker-btn team13-btn-yellow">موقعیت فعلی</button>
+                <button type="button" id="team13-favorite-btn-map" class="team13-favorite-picker-btn team13-btn-yellow">انتخاب از نقشه</button>
+                <div class="team13-favorite-search-wrap">
+                  <label class="team13-field-label" for="team13-favorite-search-input">جستجوی آدرس</label>
+                  <input type="text" id="team13-favorite-search-input" class="team13-input-route" placeholder="آدرس یا نام مکان..." autocomplete="off" />
+                  <div id="team13-favorite-search-results" class="team13-favorite-search-results" hidden></div>
+                </div>
+              </div>
+            </div>
+
+            <form id="team13-form-add-favorite" class="team13-form-add-favorite team13-favorite-step" style="display: none;">
+              <input type="hidden" id="team13-favorite-lat" name="lat" />
+              <input type="hidden" id="team13-favorite-lng" name="lng" />
+              <input type="hidden" id="team13-favorite-address" name="address" />
+              <div class="team13-form-row">
+                <label class="team13-field-label" for="team13-favorite-name">نام مکان (مثلاً خانه، محل کار)</label>
+                <input type="text" id="team13-favorite-name" class="team13-input-route" placeholder="مثال: خانه" required />
+              </div>
+              <div class="team13-form-row">
+                <label class="team13-field-label">نوع نمایش</label>
+                <select id="team13-favorite-type" class="team13-input-route">
+                  <option value="other">سایر</option>
+                  <option value="restaurant">رستوران</option>
+                  <option value="hospital">بیمارستان</option>
+                  <option value="hotel">هتل</option>
+                  <option value="museum">موزه</option>
+                  <option value="entertainment">تفریحی</option>
+                  <option value="gym">ورزشگاه</option>
+                </select>
+              </div>
+              <div class="team13-form-row">
+                <span class="team13-field-label">انتخاب آیکون</span>
+                <div class="team13-favorite-icon-pick" role="group" aria-label="انتخاب آیکون">
+                  <label class="team13-icon-option"><input type="radio" name="favorite-icon" value="🏠" checked /> 🏠</label>
+                  <label class="team13-icon-option"><input type="radio" name="favorite-icon" value="💼" /> 💼</label>
+                  <label class="team13-icon-option"><input type="radio" name="favorite-icon" value="❤️" /> ❤️</label>
+                  <label class="team13-icon-option"><input type="radio" name="favorite-icon" value="⭐" /> ⭐</label>
+                  <label class="team13-icon-option"><input type="radio" name="favorite-icon" value="🏋️" /> 🏋️</label>
+                </div>
+              </div>
+              <div class="team13-modal-actions">
+                <button type="submit" class="team13-btn-save-favorite team13-btn-yellow">ذخیره</button>
+                <button type="button" id="team13-favorite-back-picker" class="team13-btn-modal-close">تغییر مکان</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
         <!-- Main: map (flex-grow) -->
         <main class="team13-map-main">
           <div class="team13-map-search-wrap">
@@ -316,6 +404,365 @@
         if (hamburger) hamburger.addEventListener("click", toggleSidebar);
         if (overlay) overlay.addEventListener("click", closeSidebar);
         window.Team13CloseSidebar = closeSidebar;
+      })();
+
+      (function () {
+        var FAVORITES_KEY = "team13_favorites";
+        var btnFavorites = document.getElementById("team13-btn-favorites");
+        var modalList = document.getElementById("team13-modal-favorites-list");
+        var modalAdd = document.getElementById("team13-modal-add-favorite");
+        var stepLogin = document.getElementById("team13-favorite-login-gate");
+        var stepPicker = document.getElementById("team13-favorite-step-picker");
+        var formAdd = document.getElementById("team13-form-add-favorite");
+        var favoritesListEl = document.getElementById("team13-favorites-list");
+        var btnAddNew = document.getElementById("team13-btn-add-new-favorite");
+        var typeLabels = { other: "سایر", restaurant: "رستوران", hospital: "بیمارستان", hotel: "هتل", museum: "موزه", entertainment: "تفریحی", gym: "ورزشگاه" };
+
+        function isLoggedIn() { return document.body.getAttribute("data-user-logged-in") === "true"; }
+        function getFavorites() { try { var raw = localStorage.getItem(FAVORITES_KEY); return raw ? JSON.parse(raw) : []; } catch (e) { return []; } }
+        function setFavorites(arr) { localStorage.setItem(FAVORITES_KEY, JSON.stringify(arr)); }
+
+        function showModal(el) {
+          if (el) { el.hidden = false; el.classList.add("team13-modal-open"); }
+          if (el && (el.id === "team13-modal-add-favorite" || el.id === "team13-modal-favorites-list" || el.id === "team13-modal-route-start" || el.id === "team13-modal-favorite-details"))
+            document.body.classList.add("team13-favorite-modal-open");
+        }
+        function hideModal(el) {
+          if (el) { el.hidden = true; el.classList.remove("team13-modal-open"); }
+          if (el && (el.id === "team13-modal-add-favorite" || el.id === "team13-modal-favorites-list" || el.id === "team13-modal-route-start" || el.id === "team13-modal-favorite-details"))
+            document.body.classList.remove("team13-favorite-modal-open");
+        }
+
+        function showAddFavoriteStep(stepName) {
+          if (stepLogin) stepLogin.style.display = stepName === "login" ? "block" : "none";
+          if (stepPicker) stepPicker.style.display = stepName === "picker" ? "block" : "none";
+          if (formAdd) formAdd.style.display = stepName === "form" ? "block" : "none";
+        }
+
+        function setFavoriteCoords(lat, lng, typeValue, suggestedName) {
+          var latEl = document.getElementById("team13-favorite-lat");
+          var lngEl = document.getElementById("team13-favorite-lng");
+          var nameEl = document.getElementById("team13-favorite-name");
+          var addressEl = document.getElementById("team13-favorite-address");
+          var typeSelect = document.getElementById("team13-favorite-type");
+          if (latEl) latEl.value = lat;
+          if (lngEl) lngEl.value = lng;
+          if (suggestedName && nameEl) nameEl.value = suggestedName;
+          if (suggestedName && addressEl) addressEl.value = suggestedName;
+          if (typeValue && typeSelect) {
+            var opt = typeSelect.querySelector("option[value=\"" + typeValue + "\"]");
+            if (opt) typeSelect.value = typeValue;
+          }
+          showAddFavoriteStep("form");
+        }
+
+        if (btnFavorites) {
+          btnFavorites.addEventListener("click", function () {
+            if (!isLoggedIn()) {
+              showModal(modalAdd);
+              showAddFavoriteStep("login");
+              return;
+            }
+            renderFavoritesList();
+            showModal(modalList);
+          });
+        }
+
+        var btnCurrent = document.getElementById("team13-favorite-btn-current");
+        if (btnCurrent) {
+          btnCurrent.addEventListener("click", function () {
+            if (!navigator.geolocation) { alert("موقعیت جغرافیایی پشتیبانی نمی‌شود."); return; }
+            navigator.geolocation.getCurrentPosition(
+              function (pos) { setFavoriteCoords(pos.coords.latitude, pos.coords.longitude); },
+              function () { alert("دسترسی به موقعیت برقرار نشد."); },
+              { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+            );
+          });
+        }
+
+        var btnMap = document.getElementById("team13-favorite-btn-map");
+        if (btnMap && window.Team13MapData && typeof window.Team13MapData.startMapPickForFavorite === "function") {
+          btnMap.addEventListener("click", function () {
+            hideModal(modalAdd);
+            if (typeof window.showToast === "function") window.showToast("روی نقشه کلیک کنید تا مکان انتخاب شود.");
+            window.Team13MapData.startMapPickForFavorite(function (lat, lng) {
+              if (typeof window.showToast === "function") window.showToast("مکان انتخاب شد.");
+              setFavoriteCoords(lat, lng);
+              showModal(modalAdd);
+            });
+          });
+        }
+
+        var searchInput = document.getElementById("team13-favorite-search-input");
+        var searchResults = document.getElementById("team13-favorite-search-results");
+        if (searchInput && searchResults && window.Team13MapData && typeof window.Team13MapData.mapirAutocomplete === "function") {
+          var searchDebounce;
+          searchInput.addEventListener("input", function () {
+            clearTimeout(searchDebounce);
+            var q = (searchInput.value || "").trim();
+            if (q.length < 2) { searchResults.hidden = true; searchResults.innerHTML = ""; return; }
+            searchDebounce = setTimeout(function () {
+              window.Team13MapData.mapirAutocomplete(q).then(function (items) {
+                searchResults.innerHTML = "";
+                (items || []).forEach(function (item) {
+                  var title = (item.title || item.address || item.name || item.text || "").trim();
+                  var y = item.y != null ? parseFloat(item.y) : (item.lat != null ? parseFloat(item.lat) : null);
+                  var x = item.x != null ? parseFloat(item.x) : (item.lon != null ? parseFloat(item.lon) : null);
+                  if (y == null || x == null && item.geom) {
+                    var geom = item.geom || item.geometry;
+                    if (geom && geom.coordinates && geom.coordinates.length >= 2) { x = geom.coordinates[0]; y = geom.coordinates[1]; }
+                  }
+                  if (y == null || x == null) return;
+                  var div = document.createElement("div");
+                  div.className = "team13-search-result-item";
+                  div.textContent = title;
+                  div.dataset.lat = y;
+                  div.dataset.lng = x;
+                  div.dataset.title = title;
+                  var typeVal = (item.type || item.class || item.category || "").toLowerCase();
+                  if (typeVal) { div.dataset.type = typeVal; div.dataset.typeLabel = typeVal; }
+                  div.addEventListener("click", function () {
+                    var typeValue = (div.dataset.type || "other").toLowerCase();
+                    if (!typeLabels[typeValue]) typeValue = "other";
+                    setFavoriteCoords(parseFloat(div.dataset.lat), parseFloat(div.dataset.lng), typeValue, title);
+                    searchResults.hidden = true;
+                    searchResults.innerHTML = "";
+                    searchInput.value = title;
+                  });
+                  searchResults.appendChild(div);
+                });
+                searchResults.hidden = !items || items.length === 0;
+              });
+            }, 300);
+          });
+          searchInput.addEventListener("blur", function () { setTimeout(function () { searchResults.hidden = true; }, 200); });
+        }
+        if (searchResults) searchResults.className = "team13-favorite-search-results team13-search-results";
+
+        var btnBackPicker = document.getElementById("team13-favorite-back-picker");
+        if (btnBackPicker) btnBackPicker.addEventListener("click", function () { showAddFavoriteStep("picker"); });
+
+        if (formAdd) {
+          formAdd.addEventListener("submit", function (e) {
+            e.preventDefault();
+            var nameEl = document.getElementById("team13-favorite-name");
+            var typeSelect = document.getElementById("team13-favorite-type");
+            var latEl = document.getElementById("team13-favorite-lat");
+            var lngEl = document.getElementById("team13-favorite-lng");
+            var addressEl = document.getElementById("team13-favorite-address");
+            var iconRadio = formAdd.querySelector("input[name=\"favorite-icon\"]:checked");
+            var fav = {
+              name: (nameEl && nameEl.value) ? nameEl.value.trim() : "",
+              type: typeSelect ? typeSelect.value : "other",
+              typeLabel: typeSelect ? (typeLabels[typeSelect.value] || typeSelect.value) : "سایر",
+              icon: iconRadio ? iconRadio.value : "⭐",
+              lat: latEl ? parseFloat(latEl.value) : null,
+              lng: lngEl ? parseFloat(lngEl.value) : null,
+              address: (addressEl && addressEl.value) ? addressEl.value.trim() : ""
+            };
+            var arr = getFavorites();
+            arr.push(fav);
+            setFavorites(arr);
+            if (nameEl) nameEl.value = "";
+            if (typeSelect) typeSelect.value = "other";
+            if (addressEl) addressEl.value = "";
+            var firstIcon = formAdd.querySelector("input[name=\"favorite-icon\"]");
+            if (firstIcon) firstIcon.checked = true;
+            if (latEl) latEl.value = ""; if (lngEl) lngEl.value = "";
+            hideModal(modalAdd);
+            if (modalList) { renderFavoritesList(); showModal(modalList); }
+          });
+        }
+
+        var modalRouteStart = document.getElementById("team13-modal-route-start");
+        var modalDetails = document.getElementById("team13-modal-favorite-details");
+        var detailsContent = document.getElementById("team13-favorite-details-content");
+
+        function isPublicPlace(fav) {
+          return fav.type && fav.type !== "other";
+        }
+
+        function renderFavoritesList() {
+          if (!favoritesListEl) return;
+          var list = getFavorites();
+          if (list.length === 0) {
+            favoritesListEl.innerHTML = "<p class=\"team13-favorites-empty\">هنوز علاقه‌مندی اضافه نکرده‌اید.</p>";
+          } else {
+            var html = "";
+            list.forEach(function (fav, i) {
+              var addrOrType = (fav.address && fav.address.trim()) ? fav.address.trim() : (fav.typeLabel || fav.type || "—");
+              html += "<div class=\"team13-favorite-item\" data-index=\"" + i + "\">" +
+                "<span class=\"team13-favorite-item-icon\">" + (fav.icon || "⭐") + "</span>" +
+                "<div class=\"team13-favorite-item-text\">" +
+                "<span class=\"team13-favorite-item-name\">" + (fav.name || "—") + "</span>" +
+                "<span class=\"team13-favorite-item-addr\">" + addrOrType + "</span>" +
+                "</div>" +
+                "<div class=\"team13-favorite-item-actions\">" +
+                "<button type=\"button\" class=\"team13-fav-btn-route team13-btn-yellow-small\" data-index=\"" + i + "\">مسیریابی</button>" +
+                "<button type=\"button\" class=\"team13-fav-btn-info\" data-index=\"" + i + "\">جزئیات</button>" +
+                "<button type=\"button\" class=\"team13-favorite-item-remove\" data-index=\"" + i + "\" aria-label=\"حذف\">×</button>" +
+                "</div>" +
+                "</div>";
+            });
+            favoritesListEl.innerHTML = html;
+          }
+          favoritesListEl.querySelectorAll(".team13-favorite-item-remove").forEach(function (btn) {
+            btn.addEventListener("click", function (e) { e.stopPropagation(); var idx = parseInt(btn.getAttribute("data-index"), 10); var arr = getFavorites(); arr.splice(idx, 1); setFavorites(arr); renderFavoritesList(); });
+          });
+          favoritesListEl.querySelectorAll(".team13-fav-btn-route").forEach(function (btn) {
+            btn.addEventListener("click", function (e) { e.stopPropagation(); var idx = parseInt(btn.getAttribute("data-index"), 10); openRouteStartModal(idx); });
+          });
+          favoritesListEl.querySelectorAll(".team13-fav-btn-info").forEach(function (btn) {
+            btn.addEventListener("click", function (e) { e.stopPropagation(); var idx = parseInt(btn.getAttribute("data-index"), 10); openDetailsModal(idx); });
+          });
+        }
+
+        if (btnAddNew) {
+          btnAddNew.addEventListener("click", function () {
+            hideModal(modalList);
+            showModal(modalAdd);
+            showAddFavoriteStep("picker");
+            var latEl = document.getElementById("team13-favorite-lat");
+            var lngEl = document.getElementById("team13-favorite-lng");
+            var addressEl = document.getElementById("team13-favorite-address");
+            if (latEl) latEl.value = ""; if (lngEl) lngEl.value = ""; if (addressEl) addressEl.value = "";
+          });
+        }
+
+        function openRouteStartModal(favIndex) {
+          var list = getFavorites();
+          var fav = list[favIndex];
+          if (!fav || fav.lat == null || fav.lng == null) return;
+          window._team13RouteDestFavorite = { lat: fav.lat, lng: fav.lng, name: fav.name || "" };
+          hideModal(modalList);
+          showModal(modalRouteStart);
+        }
+
+        function openDetailsModal(favIndex) {
+          var list = getFavorites();
+          var fav = list[favIndex];
+          if (!fav) return;
+          var isPublic = isPublicPlace(fav);
+          var html = "";
+          if (isPublic) {
+            html += "<p class=\"team13-detail-row\"><strong>دسته‌بندی:</strong> " + (fav.typeLabel || fav.type || "—") + "</p>";
+            html += "<p class=\"team13-detail-row\"><strong>امتیاز:</strong> —</p>";
+            html += "<p class=\"team13-detail-row\"><strong>ساعات کاری:</strong> —</p>";
+            if (fav.address) html += "<p class=\"team13-detail-row\"><strong>آدرس:</strong> " + fav.address + "</p>";
+          } else {
+            html += "<p class=\"team13-detail-row\"><strong>برچسب:</strong> " + (fav.name || "—") + "</p>";
+            html += "<p class=\"team13-detail-row\"><strong>آدرس:</strong> " + (fav.address || "—") + "</p>";
+          }
+          if (detailsContent) detailsContent.innerHTML = html;
+          showModal(modalDetails);
+        }
+
+        var routeStartCurrent = document.getElementById("team13-route-start-current");
+        var routeStartMap = document.getElementById("team13-route-start-map");
+        var routeStartSearch = document.getElementById("team13-route-start-search");
+        var routeStartResults = document.getElementById("team13-route-start-results");
+
+        if (routeStartCurrent) {
+          routeStartCurrent.addEventListener("click", function () {
+            var dest = window._team13RouteDestFavorite;
+            if (!dest || !window.Team13MapData) return;
+            if (!navigator.geolocation) { if (window.showToast) window.showToast("موقعیت جغرافیایی پشتیبانی نمی‌شود."); return; }
+            navigator.geolocation.getCurrentPosition(
+              function (pos) {
+                var setStart = window.Team13MapData.setStartFromCoords;
+                var setDest = window.Team13MapData.setDestFromCoords;
+                var draw = window.Team13MapData.drawRouteFromToIfBoth;
+                if (setStart) setStart(pos.coords.latitude, pos.coords.longitude, "");
+                if (setDest) setDest(dest.lat, dest.lng, dest.name || "");
+                if (draw) draw();
+                hideModal(modalRouteStart);
+                if (window.Team13CloseSidebar) window.Team13CloseSidebar();
+                var tabRoutes = document.querySelector("[data-tab=\"routes\"]");
+                if (tabRoutes) tabRoutes.click();
+              },
+              function () { if (window.showToast) window.showToast("دسترسی به موقعیت برقرار نشد."); },
+              { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+            );
+          });
+        }
+
+        if (routeStartMap && window.Team13MapData && window.Team13MapData.setPickMode && window.Team13MapData.setDestFromCoords) {
+          routeStartMap.addEventListener("click", function () {
+            var dest = window._team13RouteDestFavorite;
+            if (!dest) return;
+            window.Team13MapData.setDestFromCoords(dest.lat, dest.lng, dest.name || "");
+            window.Team13MapData.setPickMode("start");
+            hideModal(modalRouteStart);
+            if (window.Team13CloseSidebar) window.Team13CloseSidebar();
+            if (window.showToast) window.showToast("روی نقشه کلیک کنید تا مبدا انتخاب شود.");
+            var tabRoutes = document.querySelector("[data-tab=\"routes\"]");
+            if (tabRoutes) tabRoutes.click();
+          });
+        }
+
+        if (routeStartSearch && routeStartResults && window.Team13MapData && window.Team13MapData.mapirAutocomplete) {
+          var routeSearchDebounce;
+          routeStartSearch.addEventListener("input", function () {
+            clearTimeout(routeSearchDebounce);
+            var q = (routeStartSearch.value || "").trim();
+            if (q.length < 2) { routeStartResults.hidden = true; routeStartResults.innerHTML = ""; return; }
+            routeSearchDebounce = setTimeout(function () {
+              window.Team13MapData.mapirAutocomplete(q).then(function (items) {
+                routeStartResults.innerHTML = "";
+                (items || []).forEach(function (item) {
+                  var title = (item.title || item.address || item.name || item.text || "").trim();
+                  var y = item.y != null ? parseFloat(item.y) : (item.lat != null ? parseFloat(item.lat) : null);
+                  var x = item.x != null ? parseFloat(item.x) : (item.lon != null ? parseFloat(item.lon) : null);
+                  if (y == null || x == null) { var geom = item.geom || item.geometry; if (geom && geom.coordinates && geom.coordinates.length >= 2) { x = geom.coordinates[0]; y = geom.coordinates[1]; } }
+                  if (y == null || x == null) return;
+                  var div = document.createElement("div");
+                  div.className = "team13-search-result-item";
+                  div.textContent = title;
+                  div.dataset.lat = y;
+                  div.dataset.lng = x;
+                  div.addEventListener("click", function () {
+                    var setStart = window.Team13MapData.setStartFromCoords;
+                    var setDest = window.Team13MapData.setDestFromCoords;
+                    var draw = window.Team13MapData.drawRouteFromToIfBoth;
+                    var dest = window._team13RouteDestFavorite;
+                    if (setStart) setStart(parseFloat(div.dataset.lat), parseFloat(div.dataset.lng), title);
+                    if (dest && setDest) setDest(dest.lat, dest.lng, dest.name || "");
+                    if (draw) draw();
+                    routeStartResults.hidden = true;
+                    routeStartResults.innerHTML = "";
+                    hideModal(modalRouteStart);
+                    if (window.Team13CloseSidebar) window.Team13CloseSidebar();
+                    var tabRoutes = document.querySelector("[data-tab=\"routes\"]");
+                    if (tabRoutes) tabRoutes.click();
+                  });
+                  routeStartResults.appendChild(div);
+                });
+                routeStartResults.hidden = !items || items.length === 0;
+              });
+            }, 300);
+          });
+          routeStartSearch.addEventListener("blur", function () { setTimeout(function () { routeStartResults.hidden = true; }, 200); });
+        }
+
+        document.querySelectorAll(".team13-btn-modal-close[data-close]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var id = btn.getAttribute("data-close");
+            var el = document.getElementById(id);
+            hideModal(el);
+            if (id === "team13-modal-add-favorite" && modalList) showModal(modalList);
+          });
+        });
+
+        document.querySelectorAll(".team13-modal-overlay").forEach(function (overlay) {
+          overlay.addEventListener("click", function (e) {
+            if (e.target === overlay) {
+              overlay.hidden = true;
+              overlay.classList.remove("team13-modal-open");
+              if (["team13-modal-add-favorite","team13-modal-favorites-list","team13-modal-route-start","team13-modal-favorite-details"].indexOf(overlay.id) !== -1)
+                document.body.classList.remove("team13-favorite-modal-open");
+            }
+          });
+        });
       })();
     </script>
   </body>
