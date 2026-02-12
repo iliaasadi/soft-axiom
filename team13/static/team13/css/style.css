@@ -69,31 +69,38 @@ body.team13-map {
   top: 0;
 }
 
-/* Sidebar: fixed on the right, RTL, always stays right */
+/* Sidebar: forced right, fixed, 350px */
 .sidebar,
 .team13-sidebar {
-  position: fixed;
-  top: 0;
   right: 0 !important;
   left: auto !important;
+  position: fixed;
+  top: 0;
   width: 350px;
-  min-width: 350px;
   height: 100vh;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
   background: var(--team13-dark);
   background-color: #1b4332;
   color: #fff;
-  display: flex;
-  flex-direction: column;
   box-shadow: -2px 0 10px rgba(0,0,0,0.15);
   overflow-y: auto;
-  z-index: 1100;
   text-align: right;
-  direction: rtl; /* Persian text flow from the right */
+  direction: rtl;
 }
-/* Reserve space so map content is not under the fixed sidebar */
+.team13-sidebar .team13-panels-wrap,
+.team13-sidebar .team13-panel {
+  text-align: right;
+  direction: rtl;
+}
+/* Map takes remaining width on the left (sidebar fixed 350px on right) */
 .team13-map-main {
   order: 1;
-  margin-right: 350px;
+  width: calc(100% - 350px);
+  margin-right: 0;
+  flex: 1;
+  min-width: 0;
 }
 .team13-sidebar,
 .team13-sidebar .team13-tabs,
@@ -336,14 +343,17 @@ body.team13-map {
 .team13-panel .team13-events-city-input::placeholder { color: #999; }
 .team13-panel .team13-route-mode-label { color: #333; }
 .team13-panel .team13-route-mode-btn {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+  font-size: 0.9rem;
   color: #333;
   border: 1px solid #e0e0e0;
   background: #fff;
   background-color: #fff;
-  border-radius: 20px;
-  min-width: 80px;
-  padding: 8px 4px;
-  font-size: 0.85rem;
+  border-radius: 12px;
 }
 .team13-panel .transport-btn.active-transport,
 .team13-panel .team13-route-mode-btn.active {
@@ -459,12 +469,12 @@ body.team13-map {
   background: #2d5a4a;
 }
 
-/* Card wrapper: no leaking — overflow hidden, padding 15px, labels block above inputs */
+/* Card wrapper: padding 20px, containment (no fixed width > 310px elsewhere) */
 .ui-card,
 .team13-route-card {
   background: white;
   border-radius: 12px;
-  padding: 15px;
+  padding: 20px;
   margin: 10px;
   border: 1px solid #ddd;
   display: flex;
@@ -489,29 +499,40 @@ body.team13-map {
   max-width: 100%;
   box-sizing: border-box;
 }
-.team13-start-dest-wrap { padding-top: 0; }
-.team13-field-row { margin-bottom: 0; }
+.team13-start-dest-wrap { padding-top: 0; display: flex; flex-direction: column; gap: 8px; }
+.team13-field-row { margin-bottom: 0; display: flex; flex-direction: column; gap: 8px; }
 .team13-start-dest-wrap .team13-input-route,
 .team13-panel .team13-input-route,
 .team13-panel .team13-events-city-input {
   width: 100%;
   max-width: 100%;
-  margin-bottom: 15px;
+  margin-bottom: 0;
   box-sizing: border-box;
 }
-/* مبدا / مقصد: block-level above input boxes (no floating to the side) */
+/* مبدا / مقصد: label above; then input row (100%), then sub-options row */
 .team13-start-dest-wrap .team13-field-label,
 .team13-field-label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 0;
   font-size: 0.875rem;
   font-weight: bold;
   background: none;
   background-color: transparent;
   width: 100%;
 }
-.team13-input-btn-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
-.team13-input-with-clear { position: relative; flex: 1; min-width: 0; }
+.team13-input-btn-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.team13-input-with-clear { position: relative; width: 100%; min-width: 0; }
+.team13-sub-options {
+  display: flex;
+  gap: 5px;
+  width: 100%;
+  flex-wrap: wrap;
+}
 .team13-input-route {
   width: 100%;
   padding: 0.55rem 2.25rem 0.55rem 0.85rem;
@@ -547,17 +568,13 @@ body.team13-map {
   color: #1b4332;
   cursor: pointer;
 }
-/* Transport mode: row-reverse, space-between, equal pills, no crushing */
+/* Transport mode: vertical stack (خودرو, پیاده, دوچرخه) — no overlap */
 .team13-route-mode-wrap {
   margin-top: 10px;
   display: flex;
-  flex-direction: row-reverse;
-  flex-wrap: nowrap;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+  flex-direction: column;
   gap: 10px;
-  min-width: 0;
+  width: 100%;
   box-sizing: border-box;
 }
 .team13-route-mode-label {
@@ -569,12 +586,14 @@ body.team13-map {
 }
 .transport-btn,
 .team13-route-mode-btn {
-  flex: 1;
-  min-width: 70px;
-  padding: 8px 4px;
-  font-size: 0.85rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+  font-size: 0.9rem;
   border: 1px solid #e0e0e0;
-  border-radius: 20px;
+  border-radius: 12px;
   background: #fff;
   background-color: #fff;
   color: #333;
@@ -583,14 +602,13 @@ body.team13-map {
   box-sizing: border-box;
 }
 .team13-route-mode-btn:hover {
-  transform: scale(1.02);
+  transform: scale(1.01);
 }
 .transport-btn.active-transport,
 .team13-route-mode-btn.active {
   background-color: #fbc02d !important;
   color: #1b4332 !important;
   border-color: rgba(27, 67, 50, 0.25);
-  transform: scale(1.02);
   box-shadow: 0 2px 8px rgba(27, 67, 50, 0.25);
 }
 .team13-events-city-input {
@@ -1083,6 +1101,7 @@ body:not(.team13-map) .team13-footer .footer-links a:hover { text-decoration: un
 /* Tablet & Mobile (max-width: 1024px): sidebar overlay, slide from right, hamburger fixed top-right */
 @media (max-width: 1024px) {
   .team13-map-main {
+    width: 100%;
     margin-right: 0; /* full width when sidebar is overlay */
   }
   .team13-btn-hamburger,
@@ -1123,20 +1142,20 @@ body:not(.team13-map) .team13-footer .footer-links a:hover { text-decoration: un
   }
   .team13-route-mode-wrap {
     display: flex;
-    flex-direction: row-reverse;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
+    flex-direction: column;
     gap: 10px;
+    width: 100%;
     margin-top: 10px;
-    min-width: 0;
+    box-sizing: border-box;
   }
   .team13-route-mode-wrap .transport-btn,
   .team13-route-mode-wrap .team13-route-mode-btn {
-    flex: 1;
-    min-width: 70px;
-    padding: 8px 4px;
-    font-size: 0.85rem;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px;
+    font-size: 0.9rem;
   }
   .team13-input-route,
   .team13-events-city-input,
