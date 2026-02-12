@@ -499,7 +499,13 @@
       })
       .then(function (out) {
         if (window.team13RouteLine && map) map.removeLayer(window.team13RouteLine);
-        window.team13RouteLine = L.polyline(out.latlngs, { color: SAGE_GREEN, weight: 5 }).addTo(map);
+        window.team13RouteLine = L.polyline(out.latlngs, {
+          color: SAGE_GREEN,
+          weight: 5,
+          lineJoin: 'round',
+          lineCap: 'round',
+          smoothFactor: 1,
+        }).addTo(map);
         map.fitBounds(window.team13RouteLine.getBounds(), { padding: [40, 40] });
 
         var distanceText = out.distanceKm != null ? 'فاصله: ' + (Math.round(out.distanceKm * 10) / 10) + ' کیلومتر' : '';
@@ -946,6 +952,17 @@
           window.emergencyPoiMarker = null;
         }
         showRouteInfo('خطا: ' + (err && err.message ? err.message : (category === 'بیمارستان' ? 'بیمارستان' : 'آتش‌نشانی') + ' یافت نشد'), '');
+        clearTimeout(window._team13EmergencyErrorDismiss);
+        window._team13EmergencyErrorDismiss = setTimeout(function () {
+          var box = document.getElementById('team13-route-info');
+          if (box) {
+            box.classList.add('team13-route-info-fade-out');
+            setTimeout(function () {
+              hideRouteInfo();
+              box.classList.remove('team13-route-info-fade-out');
+            }, 500);
+          }
+        }, 5000);
       });
   }
 
@@ -990,11 +1007,21 @@
     if (btnDest) btnDest.classList.toggle('active', mode === 'dest');
   }
 
+  function syncRouteInputHasText(inputId) {
+    var input = document.getElementById(inputId);
+    if (!input) return;
+    var wrap = input.closest ? input.closest('.team13-input-with-clear') : input.parentNode;
+    if (!wrap || !wrap.classList) return;
+    if ((input.value || '').trim()) wrap.classList.add('team13-has-text');
+    else wrap.classList.remove('team13-has-text');
+  }
+
   function setStartFromCoords(lat, lng, address) {
     startCoords = { lat: lat, lng: lng };
     startAddress = address || '';
     var input = document.getElementById('team13-input-start');
     if (input) input.value = startAddress;
+    syncRouteInputHasText('team13-input-start');
     var map = getMap();
     if (map && startMarker) map.removeLayer(startMarker);
     startMarker = L.marker([lat, lng], { icon: createStartMarkerIcon(), draggable: true })
@@ -1005,6 +1032,7 @@
           startAddress = (data && (data.address || data.address_compact || data.postal_address)) || '';
           var inp = document.getElementById('team13-input-start');
           if (inp) inp.value = startAddress;
+          syncRouteInputHasText('team13-input-start');
           drawRouteFromToIfBoth();
         });
       })
@@ -1017,6 +1045,7 @@
     destAddress = address || '';
     var input = document.getElementById('team13-input-dest');
     if (input) input.value = destAddress;
+    syncRouteInputHasText('team13-input-dest');
     var topInput = document.getElementById('team13-search-input');
     if (topInput) topInput.value = destAddress;
     var map = getMap();
@@ -1031,6 +1060,7 @@
           if (inp) inp.value = destAddress;
           var top = document.getElementById('team13-search-input');
           if (top) top.value = destAddress;
+          syncRouteInputHasText('team13-input-dest');
           drawRouteFromToIfBoth();
         });
       })
@@ -1039,18 +1069,21 @@
   }
 
   function drawRouteFromToIfBoth() {
-    if (!startCoords || !destCoords || !window.Team13Api || typeof window.Team13Api.getMapirRouteFromTo !== 'function') return;
+    if (!startCoords || !destCoords || !window.Team13Api || typeof window.Team13Api.getMapirRouteFromTo !== 'function') return null;
     var clearWrap = document.getElementById('team13-clear-route-wrap');
     var clearBtn = document.getElementById('team13-btn-clear-path');
     if (clearWrap) clearWrap.style.display = '';
     else if (clearBtn) clearBtn.style.display = 'block';
-    window.Team13Api.getMapirRouteFromTo(startCoords, destCoords, routeMode)
+    return window.Team13Api.getMapirRouteFromTo(startCoords, destCoords, routeMode)
       .then(function (r) {
         if (typeof window.updateRouteInfoBox === 'function') window.updateRouteInfoBox(r);
+        if (typeof window.Team13MapCleanup === 'function') window.Team13MapCleanup();
+        return r;
       })
       .catch(function (err) {
         if (typeof window.updateRouteInfoBox === 'function') window.updateRouteInfoBox(null);
         if (typeof window.showToast === 'function') window.showToast('خطا: ' + (err && err.message ? err.message : 'مسیریابی ناموفق'));
+        throw err;
       });
   }
 
@@ -1076,6 +1109,7 @@
     startAddress = '';
     var input = document.getElementById('team13-input-start');
     if (input) input.value = '';
+    syncRouteInputHasText('team13-input-start');
     var map = getMap();
     if (startMarker && map && map.hasLayer(startMarker)) {
       map.removeLayer(startMarker);
@@ -1089,6 +1123,7 @@
     destAddress = '';
     var input = document.getElementById('team13-input-dest');
     if (input) input.value = '';
+    syncRouteInputHasText('team13-input-dest');
     var topInput = document.getElementById('team13-search-input');
     if (topInput) topInput.value = '';
     var map = getMap();
@@ -1202,6 +1237,23 @@
     bindAutocomplete(inputStart, resultsStart, setStartFromCoords);
     bindAutocomplete(inputDest, resultsDest, setDestFromCoords);
 
+    function syncClearHasText(inputEl) {
+      var wrap = inputEl && inputEl.closest ? inputEl.closest('.team13-input-with-clear') : (inputEl && inputEl.parentNode);
+      if (!wrap) return;
+      if ((inputEl.value || '').trim()) wrap.classList.add('team13-has-text');
+      else wrap.classList.remove('team13-has-text');
+    }
+    if (inputStart) {
+      inputStart.addEventListener('input', function () { syncClearHasText(inputStart); });
+      inputStart.addEventListener('change', function () { syncClearHasText(inputStart); });
+      syncClearHasText(inputStart);
+    }
+    if (inputDest) {
+      inputDest.addEventListener('input', function () { syncClearHasText(inputDest); });
+      inputDest.addEventListener('change', function () { syncClearHasText(inputDest); });
+      syncClearHasText(inputDest);
+    }
+
     if (btnPickStart) {
       btnPickStart.addEventListener('click', function () {
         setPickMode(pickMode === 'start' ? null : 'start');
@@ -1260,6 +1312,34 @@
       btnSwap.addEventListener('click', function () {
         swapStartDest();
         btnSwap.classList.toggle('team13-swap-route-rotated');
+      });
+    }
+    var btnCalcRoute = document.getElementById('team13-btn-calc-route');
+    var calcRouteText = btnCalcRoute ? btnCalcRoute.querySelector('.team13-btn-calc-route-text') : null;
+    var calcRouteSpinner = btnCalcRoute ? btnCalcRoute.querySelector('.team13-btn-calc-route-spinner') : null;
+    if (btnCalcRoute) {
+      btnCalcRoute.addEventListener('click', function () {
+        if (!startCoords || !destCoords) {
+          if (window.showToast) window.showToast('مبدا و مقصد را انتخاب کنید.');
+          return;
+        }
+        if (btnCalcRoute.disabled) return;
+        btnCalcRoute.disabled = true;
+        btnCalcRoute.classList.add('team13-btn-calc-route-loading');
+        if (calcRouteText) calcRouteText.textContent = 'در حال محاسبه...';
+        if (calcRouteSpinner) calcRouteSpinner.hidden = false;
+        var p = drawRouteFromToIfBoth();
+        function done() {
+          btnCalcRoute.disabled = false;
+          btnCalcRoute.classList.remove('team13-btn-calc-route-loading');
+          if (calcRouteText) calcRouteText.textContent = 'مسیریابی';
+          if (calcRouteSpinner) calcRouteSpinner.hidden = true;
+        }
+        if (p && typeof p.then === 'function') {
+          p.then(done).catch(done);
+        } else {
+          setTimeout(done, 1500);
+        }
       });
     }
   }

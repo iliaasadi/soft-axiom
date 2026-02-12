@@ -215,6 +215,27 @@ const WALKING_SPEED_KMH = 5;
 /** Safety cap: max points for interpolated route to avoid browser crash on very long routes (e.g. >500km). */
 const MAX_ROUTE_POINTS = 50000;
 
+/** Max points for rendered polyline to prevent fragmentation on long routes; single LineString. */
+const MAX_RENDER_POINTS = 2500;
+
+/**
+ * Simplify path for rendering: keep first/last and sample so length <= maxPoints. Single continuous line.
+ * @param {Array<[number, number]>} points - [lat, lng]
+ * @param {number} maxPoints
+ * @returns {Array<[number, number]>}
+ */
+function simplifyPathForRender(points, maxPoints = MAX_RENDER_POINTS) {
+  if (!points || points.length <= maxPoints) return points || [];
+  const out = [points[0]];
+  const step = (points.length - 1) / (maxPoints - 1);
+  for (let i = 1; i < maxPoints - 1; i++) {
+    const idx = Math.round(i * step);
+    if (idx > 0 && idx < points.length) out.push(points[idx]);
+  }
+  out.push(points[points.length - 1]);
+  return out;
+}
+
 /**
  * Haversine distance between two [lat, lng] points in meters.
  * @param {number} lat1
@@ -442,23 +463,26 @@ async function getMapirRoute(destinationCoords, serviceType) {
 
   const route = data.routes && data.routes[0];
   const fullPath = decodeRouteGeometryOnly(route, startLat, startLng, destLat, destLng);
-  const linePoints = interpolatePoints(fullPath, 2);
+  let linePoints = interpolatePoints(fullPath, 2);
+  linePoints = simplifyPathForRender(linePoints);
 
   if (window.currentPath && map) map.removeLayer(window.currentPath);
   if (window.routeLayer && map) map.removeLayer(window.routeLayer);
   if (window.currentRoute && map) map.removeLayer(window.currentRoute);
   if (window.team13RouteLine && map) map.removeLayer(window.team13RouteLine);
 
+  const routePane = map.getPane && map.getPane('team13-route-pane') ? 'team13-route-pane' : 'overlayPane';
   window.currentPath = L.polyline(linePoints, {
     color: '#40916c',
     weight: 6,
-    opacity: 0.9,
+    opacity: 1,
     smoothFactor: 1,
     noClip: true,
     lineJoin: 'round',
     lineCap: 'round',
-    pane: 'overlayPane',
+    pane: routePane,
   }).addTo(map);
+  if (window.currentPath.bringToFront) window.currentPath.bringToFront();
   window.routeLayer = window.currentPath;
   window.currentRoute = window.currentPath;
   window.team13RouteLine = window.currentPath;
@@ -512,23 +536,26 @@ async function getMapirRouteFromTo(startCoords, destCoords, serviceType) {
 
   const route = data.routes && data.routes[0];
   const fullPath = decodeRouteGeometryOnly(route, startLat, startLng, destLat, destLng);
-  const linePoints = interpolatePoints(fullPath, 2);
+  let linePoints = interpolatePoints(fullPath, 2);
+  linePoints = simplifyPathForRender(linePoints);
 
   if (window.currentPath && map) map.removeLayer(window.currentPath);
   if (window.routeLayer && map) map.removeLayer(window.routeLayer);
   if (window.currentRoute && map) map.removeLayer(window.currentRoute);
   if (window.team13RouteLine && map) map.removeLayer(window.team13RouteLine);
 
+  const routePane = map.getPane && map.getPane('team13-route-pane') ? 'team13-route-pane' : 'overlayPane';
   window.currentPath = L.polyline(linePoints, {
     color: '#40916c',
     weight: 6,
-    opacity: 0.9,
+    opacity: 1,
     smoothFactor: 1,
     noClip: true,
     lineJoin: 'round',
     lineCap: 'round',
-    pane: 'overlayPane',
+    pane: routePane,
   }).addTo(map);
+  if (window.currentPath.bringToFront) window.currentPath.bringToFront();
   window.routeLayer = window.currentPath;
   window.currentRoute = window.currentPath;
   window.team13RouteLine = window.currentPath;

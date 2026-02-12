@@ -838,7 +838,7 @@ body.team13-map {
   color: #1b4332 !important;
   box-shadow: 0 2px 8px rgba(251, 192, 45, 0.35);
 }
-.team13-panel .team13-btn-input-clear { color: #666; }
+.team13-panel .team13-btn-input-clear { color: #333; }
 .team13-panel .team13-btn-pick-map,
 .team13-panel .team13-btn-my-location {
   border: 1px solid #ddd;
@@ -1160,6 +1160,88 @@ body.team13-map {
 .team13-btn-swap-route:active { filter: brightness(0.95); }
 .team13-btn-swap-route.team13-swap-route-rotated { transform: rotate(180deg); }
 .team13-swap-icon { line-height: 1; }
+.team13-clear-route-wrap {
+  margin-top: 12px;
+  background-color: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+  direction: rtl;
+  text-align: right;
+}
+.team13-btn-clear-path {
+  display: block;
+  width: 100%;
+  padding: 8px 15px;
+  color: #d32f2f;
+  font-weight: bold;
+  font-size: 0.95rem;
+  text-align: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  direction: rtl;
+}
+.team13-btn-clear-path:hover {
+  background-color: #ffebee;
+}
+.team13-clear-route-icon {
+  margin-left: 6px;
+  font-style: normal;
+}
+.team13-clear-route-text { font-weight: bold; }
+.team13-route-calc-wrap {
+  margin-top: 14px;
+  margin-bottom: 0;
+  direction: rtl;
+  text-align: right;
+}
+.team13-btn-calc-route {
+  width: 100%;
+  border-radius: 12px;
+  padding: 15px;
+  font-weight: 800;
+  border: none;
+  background-color: #fbc02d;
+  color: #000;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.2s ease, filter 0.2s ease;
+}
+.team13-btn-calc-route:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  filter: brightness(1.03);
+}
+.team13-btn-calc-route:active:not(:disabled) { filter: brightness(0.98); }
+.team13-btn-calc-route:disabled { cursor: not-allowed; opacity: 0.9; }
+.team13-btn-calc-route.team13-btn-calc-route-loading {
+  animation: team13-btn-pulse 1s ease-in-out infinite;
+}
+@keyframes team13-btn-pulse {
+  0%, 100% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); opacity: 1; }
+  50% { box-shadow: 0 2px 16px rgba(251, 192, 45, 0.5); opacity: 0.95; }
+}
+.team13-btn-calc-route-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: team13-spin 0.7s linear infinite;
+}
+.team13-btn-calc-route-spinner[hidden] { display: none !important; }
+@keyframes team13-spin {
+  to { transform: rotate(360deg); }
+}
+.team13-route-info-box { direction: rtl; text-align: right; }
+.team13-route-info-box-content { direction: rtl; text-align: right; }
 .team13-field-row { margin-bottom: 0; display: flex; flex-direction: column; gap: 8px; }
 .team13-start-dest-wrap .team13-input-route,
 .team13-panel .team13-input-route,
@@ -1207,19 +1289,53 @@ body.team13-map {
 .team13-btn-input-clear {
   position: absolute;
   top: 50%;
-  inset-inline-end: 0.35rem;
+  inset-inline-end: 8px;
+  inset-inline-start: auto;
   transform: translateY(-50%);
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: none;
-  background: transparent;
-  color: #666;
+  background: #fff !important;
+  color: #333;
   cursor: pointer;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
+  font-weight: bold;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 5;
+  transition: all 0.2s ease-in-out;
+}
+.team13-input-with-clear.team13-has-text .team13-btn-input-clear {
+  animation: team13-clear-heartbeat 1.5s ease-in-out infinite;
+}
+@keyframes team13-clear-heartbeat {
+  0%, 100% { transform: translateY(-50%) scale(1); }
+  14%, 28% { transform: translateY(-50%) scale(1.08); }
+  21%, 35% { transform: translateY(-50%) scale(0.98); }
+  42%, 56% { transform: translateY(-50%) scale(1.05); }
+  49%, 63% { transform: translateY(-50%) scale(0.99); }
+  70%, 84% { transform: translateY(-50%) scale(1.03); }
+  77%, 91% { transform: translateY(-50%) scale(1); }
+}
+.team13-input-with-clear.team13-has-text .team13-btn-input-clear:hover {
+  animation: none;
+}
+.team13-btn-input-clear:hover {
+  color: #d32f2f;
+  background-color: #fee2e2 !important;
+  transform: translateY(-50%) scale(1.1) rotate(90deg);
+}
+.team13-btn-input-clear:active {
+  transform: translateY(-50%) scale(0.9);
+  transition: transform 0.1s ease-out;
+}
+.team13-btn-input-clear:hover:active {
+  transform: translateY(-50%) scale(0.9) rotate(90deg);
 }
 .team13-btn-pick-map, .team13-btn-my-location {
   padding: 0.45rem 0.65rem;
@@ -1645,6 +1761,11 @@ body.team13-map {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   min-width: 220px;
   border: 1px solid rgba(27, 67, 50, 0.15);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+.team13-route-info.team13-route-info-fade-out {
+  opacity: 0;
+  transform: translateY(-20px);
 }
 .team13-route-info[hidden] {
   display: none !important;

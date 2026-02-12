@@ -163,6 +163,10 @@
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
+    try {
+      var routePane = map.createPane('team13-route-pane');
+      if (routePane) routePane.style.zIndex = '1000';
+    } catch (e) {}
     setTimeout(function () {
       if (map && typeof map.invalidateSize === 'function') {
         map.invalidateSize();
