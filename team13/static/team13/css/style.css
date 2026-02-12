@@ -75,16 +75,16 @@ body.team13-map {
 }
 .team13-topbar-title { flex: 1; text-align: center; }
 
-/* Sidebar: forced right, RTL text, order: 2, 350px, full height */
+/* Sidebar: fixed on the right, RTL, always stays right */
 .sidebar,
 .team13-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0 !important;
+  left: auto !important;
   width: 350px;
   min-width: 350px;
   height: 100vh;
-  flex-shrink: 0;
-  order: 2;
-  right: 0 !important;
-  left: auto !important;
   background: var(--team13-dark);
   background-color: #1b4332;
   color: #fff;
@@ -94,9 +94,13 @@ body.team13-map {
   overflow-y: auto;
   z-index: 1100;
   text-align: right;
-  direction: rtl;
+  direction: rtl; /* Persian text flow from the right */
 }
-.team13-map-main { order: 1; }
+/* Reserve space so map content is not under the fixed sidebar */
+.team13-map-main {
+  order: 1;
+  margin-right: 350px;
+}
 .team13-sidebar,
 .team13-sidebar .team13-tabs,
 .team13-sidebar .team13-tab-btn { color: #fff; }
@@ -178,6 +182,12 @@ body.team13-map {
   position: relative;
   display: flex;
   flex-direction: column;
+}
+/* Hamburger / menu toggle: always pinned top-right when visible */
+.team13-btn-hamburger,
+#menu-toggle {
+  right: 20px;
+  left: auto;
 }
 .team13-map-search-wrap {
   position: absolute;
@@ -1064,7 +1074,7 @@ body:not(.team13-map) .team13-footer .footer-links a:hover { text-decoration: un
   pointer-events: auto;
 }
 
-/* Tablet & Mobile (max-width: 1024px): sidebar hidden off right, hamburger on right */
+/* Tablet & Mobile (max-width: 1024px): sidebar overlay, slide from right, hamburger top-right */
 @media (max-width: 1024px) {
   .team13-topbar {
     justify-content: space-between;
@@ -1072,6 +1082,9 @@ body:not(.team13-map) .team13-footer .footer-links a:hover { text-decoration: un
   }
   .team13-topbar-title {
     text-align: right;
+  }
+  .team13-map-main {
+    margin-right: 0; /* full width when sidebar is overlay */
   }
   .team13-btn-hamburger,
   #menu-toggle {
@@ -1093,14 +1106,14 @@ body:not(.team13-map) .team13-footer .footer-links a:hover { text-decoration: un
     max-width: 360px;
     height: 100vh;
     min-width: 0;
-    transform: translateX(100%);
+    transform: translateX(100%); /* hidden: off to the right */
     transition: transform 0.3s ease;
     z-index: 2000;
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
   }
   .team13-sidebar.team13-sidebar-open,
   .team13-sidebar.active-sidebar {
-    transform: translateX(0);
+    transform: translateX(0); /* open: visible */
   }
   .team13-map-search-wrap {
     width: 90%;
