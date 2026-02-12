@@ -370,6 +370,47 @@ def _compute_route_result(source, dest, travel_mode, request):
         "eta_source": eta_source,
         "source_amenities": list(source.amenities.values_list("amenity_name", flat=True)),
         "destination_amenities": list(dest.amenities.values_list("amenity_name", flat=True)),
+        "source_lat": source.latitude,
+        "source_lng": source.longitude,
+        "dest_lat": dest.latitude,
+        "dest_lng": dest.longitude,
+    }
+
+
+def _compute_route_result_from_coords(lat_src, lng_src, name_src, lat_dest, lng_dest, name_dest, travel_mode):
+    """محاسبه فاصله و ETA از روی مختصات (برای جستجوی آدرس)."""
+    from .mapir_eta import fetch_route_eta
+
+    dist_km = _distance_km(lat_src, lng_src, lat_dest, lng_dest)
+    eta_minutes = None
+    eta_source = "haversine"
+
+    if travel_mode == "car":
+        dist_mapir, dur_sec = fetch_route_eta(lng_src, lat_src, lng_dest, lat_dest)
+        if dist_mapir is not None and dur_sec is not None:
+            dist_km = dist_mapir
+            eta_minutes = max(1, round(dur_sec / 60.0))
+            eta_source = "mapir"
+        else:
+            eta_minutes = max(1, round(dist_km / 0.5))
+    elif travel_mode == "walk":
+        eta_minutes = max(1, round(dist_km / 0.08))
+    else:
+        eta_minutes = max(1, round(dist_km / 0.4))
+
+    return {
+        "source_name": name_src or "مبدأ",
+        "destination_name": name_dest or "مقصد",
+        "travel_mode": travel_mode,
+        "distance_km": round(dist_km, 2),
+        "eta_minutes": eta_minutes,
+        "eta_source": eta_source,
+        "source_amenities": [],
+        "destination_amenities": [],
+        "source_lat": lat_src,
+        "source_lng": lng_src,
+        "dest_lat": lat_dest,
+        "dest_lng": lng_dest,
     }
 
 
@@ -377,38 +418,68 @@ def _compute_route_result(source, dest, travel_mode, request):
 def route_request(request):
     """
     مسیریابی و ETA بین دو مکان + امکانات مبدأ و مقصد.
-    برای حالت خودرو در صورت تنظیم MAPIR_API_KEY از API تخمین زمان رسیدن مپ استفاده می‌شود.
+    پذیرش: source_place_id/destination_place_id (مکان از دیتابیس) یا
+    source_lat, source_lng, source_name, dest_lat, dest_lng, dest_name (جستجوی آدرس).
     """
     src_id = request.GET.get("source_place_id")
     dst_id = request.GET.get("destination_place_id")
+    source_lat = request.GET.get("source_lat")
+    source_lng = request.GET.get("source_lng")
+    source_name = request.GET.get("source_name", "")
+    dest_lat = request.GET.get("dest_lat")
+    dest_lng = request.GET.get("dest_lng")
+    dest_name = request.GET.get("dest_name", "")
     travel_mode = request.GET.get("travel_mode", "car").lower()
     if travel_mode not in ("car", "walk", "transit"):
         travel_mode = "car"
 
     if _wants_json(request):
-        if not src_id or not dst_id:
-            return JsonResponse({"error": "source_place_id و destination_place_id الزامی است"}, status=400)
-        try:
-            source = Place.objects.prefetch_related("translations", "amenities").get(place_id=src_id)
-            dest = Place.objects.prefetch_related("translations", "amenities").get(place_id=dst_id)
-        except Place.DoesNotExist:
-            return JsonResponse({"error": "مکان مبدأ یا مقصد یافت نشد"}, status=404)
-        result = _compute_route_result(source, dest, travel_mode, request)
-        if getattr(request.user, "is_authenticated", False):
+        if src_id and dst_id:
             try:
-                RouteLog.objects.create(
-                    user_id=getattr(request.user, "id", None),
-                    source_place=source,
-                    destination_place=dest,
-                    travel_mode=travel_mode,
+                source = Place.objects.prefetch_related("translations", "amenities").get(place_id=src_id)
+                dest = Place.objects.prefetch_related("translations", "amenities").get(place_id=dst_id)
+                result = _compute_route_result(source, dest, travel_mode, request)
+                if getattr(request.user, "is_authenticated", False):
+                    try:
+                        RouteLog.objects.create(
+                            user_id=getattr(request.user, "id", None),
+                            source_place=source,
+                            destination_place=dest,
+                            travel_mode=travel_mode,
+                        )
+                    except Exception:
+                        pass
+                return JsonResponse(result)
+            except Place.DoesNotExist:
+                return JsonResponse({"error": "مکان مبدأ یا مقصد یافت نشد"}, status=404)
+        if source_lat and source_lng and dest_lat and dest_lng:
+            try:
+                lat_s = float(source_lat)
+                lng_s = float(source_lng)
+                lat_d = float(dest_lat)
+                lng_d = float(dest_lng)
+                result = _compute_route_result_from_coords(
+                    lat_s, lng_s, source_name, lat_d, lng_d, dest_name, travel_mode
                 )
-            except Exception:
+                return JsonResponse(result)
+            except (TypeError, ValueError):
                 pass
-        return JsonResponse(result)
+        return JsonResponse({"error": "source_place_id و destination_place_id یا source_lat/lng و dest_lat/lng الزامی است"}, status=400)
 
-    # صفحه HTML: فرم انتخاب مبدأ و مقصد و نمایش نتیجه + امکانات
+    # صفحه HTML
     route_result = None
-    if src_id and dst_id:
+    if source_lat and source_lng and dest_lat and dest_lng:
+        try:
+            lat_s = float(source_lat)
+            lng_s = float(source_lng)
+            lat_d = float(dest_lat)
+            lng_d = float(dest_lng)
+            route_result = _compute_route_result_from_coords(
+                lat_s, lng_s, source_name, lat_d, lng_d, dest_name, travel_mode
+            )
+        except (TypeError, ValueError):
+            route_result = {"error": "مختصات مبدأ یا مقصد نامعتبر است."}
+    elif src_id and dst_id:
         try:
             source = Place.objects.prefetch_related("translations", "amenities").get(place_id=src_id)
             dest = Place.objects.prefetch_related("translations", "amenities").get(place_id=dst_id)
@@ -426,7 +497,6 @@ def route_request(request):
         except Place.DoesNotExist:
             route_result = {"error": "مکان مبدأ یا مقصد یافت نشد."}
 
-    # لیست مکان‌ها برای dropdown
     places_choices = list(Place.objects.all().prefetch_related("translations")[:200])
     places_for_select = []
     for p in places_choices:

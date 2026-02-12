@@ -58,6 +58,7 @@
    */
   function updateRouteInfoBox(r) {
     var content = document.getElementById('route-info-box-content');
+    var clearWrap = document.getElementById('team13-clear-route-wrap');
     var clearBtn = document.getElementById('team13-btn-clear-path');
     if (!content) return;
     if (r && (r.durationMinutes != null || r.distanceKm != null)) {
@@ -65,10 +66,12 @@
       var distStr = r.distanceKm != null ? (toPersianNum(Math.round(r.distanceKm * 10) / 10) + ' کیلومتر') : '—';
       var modeIcon = getModeIcon(r.serviceType);
       content.innerHTML = '<p class="team13-route-info-row">' + modeIcon + ' <strong>زمان تخمینی:</strong> ' + timeStr + '</p><p><strong>فاصله:</strong> ' + distStr + '</p>';
-      if (clearBtn) clearBtn.style.display = 'block';
+      if (clearWrap) clearWrap.style.display = '';
+      else if (clearBtn) clearBtn.style.display = 'block';
     } else {
       content.textContent = 'مسیری را از نقشه یا جستجو انتخاب کنید.';
-      if (clearBtn) clearBtn.style.display = 'none';
+      if (clearWrap) clearWrap.style.display = 'none';
+      else if (clearBtn) clearBtn.style.display = 'none';
     }
   }
 
@@ -170,6 +173,7 @@
 
   function initClearPathButton() {
     var btn = document.getElementById('team13-btn-clear-path');
+    var wrap = document.getElementById('team13-clear-route-wrap');
     if (!btn) return;
     L.DomEvent.on(btn, 'click', function () {
       var map = window.team13MapInstance;
@@ -182,7 +186,8 @@
       window.currentRoute = null;
       window.team13RouteLine = null;
       updateRouteInfoBox(null);
-      if (btn) btn.style.display = 'none';
+      if (wrap) wrap.style.display = 'none';
+      else if (btn) btn.style.display = 'none';
       if (map) map.setView([35.7219, 51.3347], 12);
     });
   }

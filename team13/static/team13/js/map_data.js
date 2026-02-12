@@ -968,6 +968,17 @@
   var routeMode = 'driving';
   var reverseGeocodeMarker = null;
 
+  function setRouteMode(mode) {
+    routeMode = (mode || 'driving').toLowerCase();
+    var wrap = document.getElementById('team13-route-mode-wrap');
+    if (wrap) {
+      wrap.querySelectorAll('.team13-route-mode-btn').forEach(function (b) {
+        b.classList.remove('active', 'active-transport');
+        if ((b.getAttribute('data-mode') || '') === routeMode) b.classList.add('active', 'active-transport');
+      });
+    }
+  }
+
   function setPickMode(mode) {
     pickMode = mode;
     var map = getMap();
@@ -1029,8 +1040,10 @@
 
   function drawRouteFromToIfBoth() {
     if (!startCoords || !destCoords || !window.Team13Api || typeof window.Team13Api.getMapirRouteFromTo !== 'function') return;
+    var clearWrap = document.getElementById('team13-clear-route-wrap');
     var clearBtn = document.getElementById('team13-btn-clear-path');
-    if (clearBtn) clearBtn.style.display = 'block';
+    if (clearWrap) clearWrap.style.display = '';
+    else if (clearBtn) clearBtn.style.display = 'block';
     window.Team13Api.getMapirRouteFromTo(startCoords, destCoords, routeMode)
       .then(function (r) {
         if (typeof window.updateRouteInfoBox === 'function') window.updateRouteInfoBox(r);
@@ -1052,8 +1065,10 @@
     window.team13RouteLine = null;
     hideRouteInfo();
     if (typeof window.updateRouteInfoBox === 'function') window.updateRouteInfoBox(null);
+    var clearWrap = document.getElementById('team13-clear-route-wrap');
     var clearBtn = document.getElementById('team13-btn-clear-path');
-    if (clearBtn) clearBtn.style.display = 'none';
+    if (clearWrap) clearWrap.style.display = 'none';
+    else if (clearBtn) clearBtn.style.display = 'none';
   }
 
   function clearStart() {
@@ -1082,6 +1097,59 @@
     }
     destMarker = null;
     clearRouteLine();
+  }
+
+  function swapStartDest() {
+    var sC = startCoords;
+    var sA = startAddress;
+    var dC = destCoords;
+    var dA = destAddress;
+    startCoords = dC;
+    startAddress = dA || '';
+    destCoords = sC;
+    destAddress = sA || '';
+    var inputStart = document.getElementById('team13-input-start');
+    var inputDest = document.getElementById('team13-input-dest');
+    var topInput = document.getElementById('team13-search-input');
+    if (inputStart) inputStart.value = startAddress;
+    if (inputDest) inputDest.value = destAddress;
+    if (topInput) topInput.value = destAddress;
+    var map = getMap();
+    if (startMarker && map && map.hasLayer(startMarker)) map.removeLayer(startMarker);
+    if (destMarker && map && map.hasLayer(destMarker)) map.removeLayer(destMarker);
+    startMarker = null;
+    destMarker = null;
+    if (startCoords && map) {
+      startMarker = L.marker([startCoords.lat, startCoords.lng], { icon: createStartMarkerIcon(), draggable: true })
+        .on('dragend', function () {
+          var pos = startMarker.getLatLng();
+          startCoords = { lat: pos.lat, lng: pos.lng };
+          window.Team13Api.reverseGeocode(pos.lat, pos.lng).then(function (data) {
+            startAddress = (data && (data.address || data.address_compact || data.postal_address)) || '';
+            var inp = document.getElementById('team13-input-start');
+            if (inp) inp.value = startAddress;
+            drawRouteFromToIfBoth();
+          });
+        })
+        .addTo(map);
+    }
+    if (destCoords && map) {
+      destMarker = L.marker([destCoords.lat, destCoords.lng], { icon: createDestMarkerIcon(), draggable: true })
+        .on('dragend', function () {
+          var pos = destMarker.getLatLng();
+          destCoords = { lat: pos.lat, lng: pos.lng };
+          window.Team13Api.reverseGeocode(pos.lat, pos.lng).then(function (data) {
+            destAddress = (data && (data.address || data.address_compact || data.postal_address)) || '';
+            var inp = document.getElementById('team13-input-dest');
+            if (inp) inp.value = destAddress;
+            var top = document.getElementById('team13-search-input');
+            if (top) top.value = destAddress;
+            drawRouteFromToIfBoth();
+          });
+        })
+        .addTo(map);
+    }
+    drawRouteFromToIfBoth();
   }
 
   function initStartDestUI() {
@@ -1185,8 +1253,15 @@
 
     var btnClearStart = document.getElementById('team13-clear-start');
     var btnClearDest = document.getElementById('team13-clear-dest');
+    var btnSwap = document.getElementById('team13-btn-swap-route');
     if (btnClearStart) btnClearStart.addEventListener('click', clearStart);
     if (btnClearDest) btnClearDest.addEventListener('click', clearDest);
+    if (btnSwap) {
+      btnSwap.addEventListener('click', function () {
+        swapStartDest();
+        btnSwap.classList.toggle('team13-swap-route-rotated');
+      });
+    }
   }
 
   function onMapClickForStartDest(e) {
@@ -1753,6 +1828,8 @@
     getRouteToPlace: requestRouteFromUserTo,
     setStartFromCoords: typeof setStartFromCoords !== 'undefined' ? setStartFromCoords : function () {},
     setDestFromCoords: typeof setDestFromCoords !== 'undefined' ? setDestFromCoords : function () {},
+    swapStartDest: typeof swapStartDest !== 'undefined' ? swapStartDest : function () {},
+    setRouteMode: typeof setRouteMode !== 'undefined' ? setRouteMode : function () {},
     drawRouteFromToIfBoth: typeof drawRouteFromToIfBoth !== 'undefined' ? drawRouteFromToIfBoth : function () {},
     setPickMode: typeof setPickMode !== 'undefined' ? setPickMode : function () {},
     flyTo: flyTo,

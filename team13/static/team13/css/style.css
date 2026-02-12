@@ -1134,6 +1134,32 @@ body.team13-map {
   box-sizing: border-box;
 }
 .team13-start-dest-wrap { padding-top: 0; display: flex; flex-direction: column; gap: 8px; }
+.team13-swap-wrap {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin: 2px 0;
+}
+.team13-btn-swap-route {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #fbc02d;
+  color: #000;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+.team13-btn-swap-route:hover { filter: brightness(1.05); }
+.team13-btn-swap-route:active { filter: brightness(0.95); }
+.team13-btn-swap-route.team13-swap-route-rotated { transform: rotate(180deg); }
+.team13-swap-icon { line-height: 1; }
 .team13-field-row { margin-bottom: 0; display: flex; flex-direction: column; gap: 8px; }
 .team13-start-dest-wrap .team13-input-route,
 .team13-panel .team13-input-route,
@@ -1800,6 +1826,69 @@ body:not(.team13-map) .btn-submit:hover { filter: brightness(1.05); }
 body:not(.team13-map) .result-box {
   background: var(--bg-white);
   border: 1px solid var(--border-color);
+}
+body:not(.team13-map) .result-box.team13-route-result-card {
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+body:not(.team13-map) .team13-route-result-content {
+  text-align: right;
+  direction: rtl;
+}
+body:not(.team13-map) .team13-show-on-map-wrap {
+  margin-top: 20px;
+  margin-bottom: 0;
+}
+body:not(.team13-map) .team13-btn-show-on-map {
+  display: inline-block;
+  background-color: #fbc02d;
+  color: #000;
+  font-weight: bold;
+  border-radius: 12px;
+  padding: 12px 24px;
+  border: none;
+  text-decoration: none;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+body:not(.team13-map) .team13-btn-show-on-map:hover { filter: brightness(1.05); }
+body:not(.team13-map) .team13-route-search-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+}
+body:not(.team13-map) .team13-route-page-input {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+}
+body:not(.team13-map) .team13-route-page-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: var(--bg-white);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  max-height: 220px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+body:not(.team13-map) .team13-route-page-results .team13-search-result-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.95rem;
+  text-align: right;
+  direction: rtl;
+}
+body:not(.team13-map) .team13-route-page-results .team13-search-result-item:last-child { border-bottom: none; }
+body:not(.team13-map) .team13-route-page-results .team13-search-result-item:hover { background: var(--bg-light); }
+body:not(.team13-map) .result-box {
   border-radius: 20px;
   padding: 20px;
   margin: 20px 0;

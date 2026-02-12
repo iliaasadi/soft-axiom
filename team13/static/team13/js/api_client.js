@@ -288,8 +288,78 @@ function normCoord(c) {
 }
 
 /**
- * Full geometry decoding: use only data.routes[0].geometry (ignore legs/steps for drawing).
- * Map.ir uses precision 5; try 6 if offset. Fallback to start->dest line if decode fails.
+ * Merge multiple path segments into one continuous array. Removes duplicate consecutive points.
+ * @param {Array<Array<[number, number]>>} segments - Arrays of [lat, lng] pairs
+ * @returns {Array<[number, number]>}
+ */
+function mergeRouteSegments(segments) {
+  if (!segments || segments.length === 0) return [];
+  const out = [];
+  for (let s = 0; s < segments.length; s++) {
+    const seg = segments[s];
+    if (!Array.isArray(seg) || seg.length === 0) continue;
+    for (let i = 0; i < seg.length; i++) {
+      const p = Array.isArray(seg[i]) && seg[i].length >= 2 ? [Number(seg[i][0]), Number(seg[i][1])] : null;
+      if (p && (out.length === 0 || out[out.length - 1][0] !== p[0] || out[out.length - 1][1] !== p[1])) out.push(p);
+    }
+  }
+  return out;
+}
+
+/**
+ * Decode a single geometry string (encoded polyline) with precision 5, 6, or default.
+ * @returns {Array<[number, number]>|null}
+ */
+function decodePolylineString(geom) {
+  if (typeof geom !== 'string' || typeof polyline === 'undefined' || !polyline.decode) return null;
+  try {
+    let path = polyline.decode(geom, 6);
+    if (path && path.length >= 2) return path;
+  } catch (e) {}
+  try {
+    path = polyline.decode(geom, 5);
+    if (path && path.length >= 2) return path;
+  } catch (e2) {}
+  try {
+    path = polyline.decode(geom);
+    if (path && path.length >= 2) return path;
+  } catch (e3) {}
+  return null;
+}
+
+/**
+ * Build path from route.legs[].steps[].geometry (encoded) or step.polyline / coordinates.
+ * @param {object} route - data.routes[0]
+ * @returns {Array<[number, number]>}
+ */
+function pathFromLegsAndSteps(route, startLat, startLng, destLat, destLng) {
+  const segments = [];
+  if (route && route.legs && Array.isArray(route.legs)) {
+    route.legs.forEach((leg) => {
+      if (leg.steps && Array.isArray(leg.steps)) {
+        leg.steps.forEach((step) => {
+          if (step.geometry && typeof step.geometry === 'string') {
+            const decoded = decodePolylineString(step.geometry);
+            if (decoded && decoded.length > 0) segments.push(decoded);
+          } else if (step.geometry && Array.isArray(step.geometry.coordinates)) {
+            const coords = step.geometry.coordinates.map((c) => (Array.isArray(c) ? [c[1], c[0]] : [c.lat ?? c[1], c.lng ?? c[0]]));
+            if (coords.length > 0) segments.push(coords);
+          } else if (step.polyline && Array.isArray(step.polyline)) {
+            const pts = step.polyline.map((c) => (Array.isArray(c) && c.length >= 2 ? [Number(c[1]), Number(c[0])] : null)).filter(Boolean);
+            if (pts.length > 0) segments.push(pts);
+          }
+        });
+      }
+    });
+  }
+  const merged = mergeRouteSegments(segments);
+  if (merged.length >= 2) return merged;
+  return [[startLat, startLng], [destLat, destLng]];
+}
+
+/**
+ * Full geometry decoding: route.geometry (encoded) with precision 6/5, then legs/steps merge.
+ * Ensures a single continuous line for long-distance routes.
  * @param {object} route - data.routes[0]
  * @param {number} startLat
  * @param {number} startLng
@@ -299,20 +369,16 @@ function normCoord(c) {
  */
 function decodeRouteGeometryOnly(route, startLat, startLng, destLat, destLng) {
   const routeGeom = route && route.geometry;
-  if (typeof routeGeom === 'string' && typeof polyline !== 'undefined' && polyline.decode) {
-    try {
-      let fullPath = polyline.decode(routeGeom, 5);
-      if (fullPath && fullPath.length >= 2) return fullPath;
-    } catch (e) {}
-    try {
-      let fullPath = polyline.decode(routeGeom, 6);
-      if (fullPath && fullPath.length >= 2) return fullPath;
-    } catch (e2) {}
-    try {
-      let fullPath = polyline.decode(routeGeom);
-      if (fullPath && fullPath.length >= 2) return fullPath;
-    } catch (e3) {}
+  if (typeof routeGeom === 'string') {
+    const fullPath = decodePolylineString(routeGeom);
+    if (fullPath && fullPath.length >= 2) return fullPath;
   }
+  if (routeGeom && Array.isArray(routeGeom.coordinates)) {
+    const coords = routeGeom.coordinates.map((c) => (Array.isArray(c) ? [c[1], c[0]] : [c.lat ?? c[1], c.lng ?? c[0]]));
+    if (coords.length >= 2) return coords;
+  }
+  const fromLegs = pathFromLegsAndSteps(route, startLat, startLng, destLat, destLng);
+  if (fromLegs.length >= 2) return fromLegs;
   return [[startLat, startLng], [destLat, destLng]];
 }
 
@@ -355,7 +421,7 @@ async function getMapirRoute(destinationCoords, serviceType) {
   const startLng = position.coords.longitude;
   const coords = `${startLng},${startLat};${destLng},${destLat}`;
   const path = getRoutePath(serviceType);
-  const url = `${MAPIR_ROUTES_BASE}/${path}/${encodeURIComponent(coords)}?steps=true&alternatives=false&geometries=polyline`;
+  const url = `${MAPIR_ROUTES_BASE}/${path}/${encodeURIComponent(coords)}?steps=true&alternatives=false&geometries=polyline6`;
 
   const res = await fetch(url, {
     method: 'GET',
@@ -387,7 +453,7 @@ async function getMapirRoute(destinationCoords, serviceType) {
     color: '#40916c',
     weight: 6,
     opacity: 0.9,
-    smoothFactor: 0,
+    smoothFactor: 1,
     noClip: true,
     lineJoin: 'round',
     lineCap: 'round',
@@ -425,7 +491,7 @@ async function getMapirRouteFromTo(startCoords, destCoords, serviceType) {
   const type = (mode === 'walking' ? 'walking' : mode === 'bicycle' ? 'bicycle' : mode === 'transit' ? 'transit' : 'driving');
   const coords = `${startLng},${startLat};${destLng},${destLat}`;
   const path = getRoutePath(serviceType);
-  const url = `${MAPIR_ROUTES_BASE}/${path}/${encodeURIComponent(coords)}?steps=true&alternatives=false&geometries=polyline`;
+  const url = `${MAPIR_ROUTES_BASE}/${path}/${encodeURIComponent(coords)}?steps=true&alternatives=false&geometries=polyline6`;
 
   const res = await fetch(url, {
     method: 'GET',
@@ -457,7 +523,7 @@ async function getMapirRouteFromTo(startCoords, destCoords, serviceType) {
     color: '#40916c',
     weight: 6,
     opacity: 0.9,
-    smoothFactor: 0,
+    smoothFactor: 1,
     noClip: true,
     lineJoin: 'round',
     lineCap: 'round',

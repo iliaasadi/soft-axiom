@@ -126,6 +126,9 @@
                   </div>
                   <div id="team13-start-results" class="team13-autocomplete-results" hidden></div>
                 </div>
+                <div class="team13-swap-wrap">
+                  <button type="button" id="team13-btn-swap-route" class="team13-btn-swap-route" aria-label="جابجایی مبدا و مقصد" title="جابجایی مبدا و مقصد"><span class="team13-swap-icon" aria-hidden="true">⇅</span></button>
+                </div>
                 <div class="team13-field-row">
                   <label class="team13-field-label" for="team13-input-dest">مقصد</label>
                   <div class="team13-input-btn-row">
@@ -151,7 +154,9 @@
                 <div id="route-info-box-content" class="team13-route-info-box-content text-sm text-gray-600">
                   مسیری را از نقشه یا جستجو انتخاب کنید.
                 </div>
-                <button type="button" id="team13-btn-clear-path" class="team13-btn-clear-path" style="display: none;">پاک کردن مسیر</button>
+                <div id="team13-clear-route-wrap" class="team13-clear-route-wrap" style="display: none;" dir="rtl">
+                  <button type="button" id="team13-btn-clear-path" class="team13-btn-clear-path" aria-label="پاک کردن مسیر"><span class="team13-clear-route-icon" aria-hidden="true">🗑</span><span class="team13-clear-route-text">پاک کردن مسیر</span></button>
+                </div>
               </div>
             </section>
             <section
@@ -413,14 +418,7 @@
       })();
 
       (function () {
-        function applyRouteFromUrl() {
-          var params = new URLSearchParams(window.location.search);
-          var action = params.get("action");
-          var startName = params.get("start_name");
-          var startLat = params.get("start_lat");
-          var startLng = params.get("start_lng");
-          if (action !== "route" || !startLat || !startLng) return;
-          var decodedName = startName ? decodeURIComponent(startName) : "";
+        function openSidebarAndRouteTab() {
           if (typeof window.Team13OpenSidebar === "function") window.Team13OpenSidebar();
           var routeTab = document.querySelector("[data-tab=\"routes\"]");
           if (routeTab) {
@@ -433,14 +431,51 @@
             var panelRoutes = document.getElementById("panel-routes");
             if (panelRoutes) panelRoutes.classList.add("active");
           }
-          var inputStart = document.getElementById("team13-input-start");
-          if (inputStart) inputStart.value = decodedName;
-          if (window.Team13MapData && typeof window.Team13MapData.setStartFromCoords === "function") {
-            var lat = parseFloat(startLat);
-            var lng = parseFloat(startLng);
-            if (!isNaN(lat) && !isNaN(lng)) window.Team13MapData.setStartFromCoords(lat, lng, decodedName);
+        }
+        function applyRouteFromUrl() {
+          var params = new URLSearchParams(window.location.search);
+          var action = params.get("action");
+          if (!action) return;
+
+          if (action === "route") {
+            var destName = params.get("dest_name");
+            var destLat = params.get("dest_lat");
+            var destLng = params.get("dest_lng");
+            if (!destLat || !destLng) return;
+            var decodedName = destName ? decodeURIComponent(destName) : "";
+            openSidebarAndRouteTab();
+            var inputStart = document.getElementById("team13-input-start");
+            if (inputStart) inputStart.value = "";
+            if (window.Team13MapData && typeof window.Team13MapData.setDestFromCoords === "function") {
+              var lat = parseFloat(destLat);
+              var lng = parseFloat(destLng);
+              if (!isNaN(lat) && !isNaN(lng)) window.Team13MapData.setDestFromCoords(lat, lng, decodedName);
+            }
+            try { window.history.replaceState({}, "", window.location.pathname); } catch (e) {}
+            return;
           }
-          try { window.history.replaceState({}, "", window.location.pathname); } catch (e) {}
+
+          if (action === "draw_route") {
+            var startLat = params.get("start_lat");
+            var startLng = params.get("start_lng");
+            var endLat = params.get("end_lat");
+            var endLng = params.get("end_lng");
+            var mode = params.get("mode") || "driving";
+            var startName = params.get("start_name") ? decodeURIComponent(params.get("start_name")) : "";
+            var endName = params.get("end_name") ? decodeURIComponent(params.get("end_name")) : "";
+            if (!startLat || !startLng || !endLat || !endLng) return;
+            var slat = parseFloat(startLat);
+            var slng = parseFloat(startLng);
+            var elat = parseFloat(endLat);
+            var elng = parseFloat(endLng);
+            if (isNaN(slat) || isNaN(slng) || isNaN(elat) || isNaN(elng)) return;
+            openSidebarAndRouteTab();
+            var md = window.Team13MapData;
+            if (md && typeof md.setRouteMode === "function") md.setRouteMode(mode);
+            if (md && typeof md.setStartFromCoords === "function") md.setStartFromCoords(slat, slng, startName);
+            if (md && typeof md.setDestFromCoords === "function") md.setDestFromCoords(elat, elng, endName);
+            try { window.history.replaceState({}, "", window.location.pathname); } catch (e) {}
+          }
         }
         if (document.readyState === "loading") {
           document.addEventListener("DOMContentLoaded", function () { setTimeout(applyRouteFromUrl, 200); });
