@@ -438,6 +438,7 @@
             if (panelRoutes) panelRoutes.classList.add("active");
           }
         }
+        window.Team13OpenSidebarAndRouteTab = openSidebarAndRouteTab;
         function cleanupAfterRedirect() {
           document.querySelectorAll(".modal-backdrop").forEach(function (el) { if (el) el.remove(); });
           document.querySelectorAll("body > .fade, body > .show").forEach(function (el) { if (el) el.remove(); });
@@ -557,6 +558,19 @@
           }
           showAddFavoriteStep("form");
         }
+
+        function openAddFavoriteWithLocation(lat, lng, address) {
+          if (!isLoggedIn()) {
+            showModal(modalAdd);
+            showAddFavoriteStep("login");
+            return;
+          }
+          showModal(modalAdd);
+          var searchInput = document.getElementById("team13-favorite-search-input");
+          if (searchInput) searchInput.value = (address || "").trim();
+          setFavoriteCoords(lat, lng, undefined, (address || "").trim());
+        }
+        window.Team13OpenAddFavoriteWithLocation = openAddFavoriteWithLocation;
 
         if (btnFavorites) {
           btnFavorites.addEventListener("click", function () {

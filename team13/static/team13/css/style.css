@@ -1623,7 +1623,69 @@ body.team13-map {
   color: #222 !important;
   transform: scale(1.02);
 }
-/* "حذف نقطه" — red action button */
+/* Reverse-geocode popup: action row (RTL) + three buttons + delete link */
+.team13-reverse-popup-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  margin-bottom: 10px;
+  direction: rtl;
+  justify-content: flex-start;
+}
+.team13-reverse-popup-btn {
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  border: none;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.team13-reverse-popup-btn:hover {
+  transform: scale(1.05);
+}
+.team13-reverse-popup-btn-fav {
+  background: #fff;
+  color: #333;
+  border: 1px solid #bdbdbd;
+}
+.team13-reverse-popup-btn-fav .team13-popup-star {
+  margin-inline-end: 4px;
+}
+.team13-reverse-popup-btn-start {
+  background: #c8e6c9;
+  color: #1b5e20;
+}
+.team13-reverse-popup-btn-dest {
+  background: #fbc02d;
+  color: #000;
+}
+.team13-reverse-popup-footer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+.team13-reverse-popup-delete-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.75rem;
+  color: #c62828;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s;
+  font-family: inherit;
+}
+.team13-reverse-popup-delete-link:hover {
+  color: #b71c1c;
+}
+
+/* Legacy "حذف نقطه" — red action button (kept for any other usages) */
 .team13-btn-delete-point {
   color: #d32f2f !important;
   font-weight: bold !important;

@@ -1373,6 +1373,59 @@
     map.on('click', onMapClickReverseGeocode);
   }
 
+  function buildReversePopupContent(lat, lng, address, markerRef, mapRef) {
+    var wrap = document.createElement('div');
+    wrap.className = 'team13-reverse-popup-content';
+    wrap.setAttribute('dir', 'rtl');
+    wrap.innerHTML =
+      '<p class="team13-reverse-popup-address">' + escapeHtml(address) + '</p>' +
+      '<div class="team13-reverse-popup-actions">' +
+      '<button type="button" class="team13-reverse-popup-btn team13-reverse-popup-btn-fav"><span class="team13-popup-star" aria-hidden="true">⭐</span> افزودن به علاقه‌مندی</button>' +
+      '<button type="button" class="team13-reverse-popup-btn team13-reverse-popup-btn-start">تعیین به عنوان مبدا</button>' +
+      '<button type="button" class="team13-reverse-popup-btn team13-reverse-popup-btn-dest">تعیین به عنوان مقصد</button>' +
+      '</div>' +
+      '<div class="team13-reverse-popup-footer">' +
+      '<button type="button" class="team13-reverse-popup-delete-link">حذف نقطه</button>' +
+      '</div>';
+    var btnFav = wrap.querySelector('.team13-reverse-popup-btn-fav');
+    var btnStart = wrap.querySelector('.team13-reverse-popup-btn-start');
+    var btnDest = wrap.querySelector('.team13-reverse-popup-btn-dest');
+    var btnDelete = wrap.querySelector('.team13-reverse-popup-delete-link');
+    if (btnFav) {
+      btnFav.addEventListener('click', function () {
+        if (typeof window.Team13OpenAddFavoriteWithLocation === 'function') {
+          window.Team13OpenAddFavoriteWithLocation(lat, lng, address);
+        }
+      });
+    }
+    if (btnStart) {
+      btnStart.addEventListener('click', function () {
+        if (typeof window.Team13OpenSidebarAndRouteTab === 'function') window.Team13OpenSidebarAndRouteTab();
+        setStartFromCoords(lat, lng, address);
+      });
+    }
+    if (btnDest) {
+      btnDest.addEventListener('click', function () {
+        if (typeof window.Team13OpenSidebarAndRouteTab === 'function') window.Team13OpenSidebarAndRouteTab();
+        setDestFromCoords(lat, lng, address);
+      });
+    }
+    if (btnDelete) {
+      btnDelete.addEventListener('click', function () {
+        clearReverseGeocodeMarker();
+      });
+    }
+    return wrap;
+  }
+
+  function clearReverseGeocodeMarker() {
+    var map = getMap();
+    if (reverseGeocodeMarker && map && map.hasLayer(reverseGeocodeMarker)) {
+      map.removeLayer(reverseGeocodeMarker);
+    }
+    reverseGeocodeMarker = null;
+  }
+
   function onMapClickReverseGeocode(e) {
     if (onMapClickForDiscovery(e)) return;
     if (onMapClickForStartDest(e)) return;
@@ -1407,32 +1460,12 @@
       .then(function (data) {
         if (!data || !reverseGeocodeMarker) return;
         var address = (data.address || data.address_compact || data.postal_address || '').trim() || 'آدرس یافت نشد';
-        var wrap = document.createElement('div');
-        wrap.className = 'team13-reverse-popup-content';
-        wrap.innerHTML = '<p class="team13-reverse-popup-address">' + escapeHtml(address) + '</p><button type="button" class="team13-btn-delete-point">حذف نقطه</button>';
-        var btn = wrap.querySelector('.team13-btn-delete-point');
-        if (btn) {
-          btn.addEventListener('click', function () {
-            var m = reverseGeocodeMarker;
-            if (m && map && map.hasLayer(m)) map.removeLayer(m);
-            reverseGeocodeMarker = null;
-          });
-        }
+        var wrap = buildReversePopupContent(lat, lng, address, reverseGeocodeMarker, map);
         reverseGeocodeMarker.setPopupContent(wrap).openPopup();
       })
       .catch(function () {
         if (!reverseGeocodeMarker) return;
-        var wrap = document.createElement('div');
-        wrap.className = 'team13-reverse-popup-content';
-        wrap.innerHTML = '<p class="team13-reverse-popup-address">آدرس یافت نشد</p><button type="button" class="team13-btn-delete-point">حذف نقطه</button>';
-        var btn = wrap.querySelector('.team13-btn-delete-point');
-        if (btn) {
-          btn.addEventListener('click', function () {
-            var m = reverseGeocodeMarker;
-            if (m && map && map.hasLayer(m)) map.removeLayer(m);
-            reverseGeocodeMarker = null;
-          });
-        }
+        var wrap = buildReversePopupContent(lat, lng, 'آدرس یافت نشد', reverseGeocodeMarker, map);
         reverseGeocodeMarker.setPopupContent(wrap).openPopup();
       });
   }
@@ -1916,6 +1949,7 @@
     panTo: function (map, lat, lng) { flyTo(map, lat, lng); },
     showFavoritePickMarker: typeof showFavoritePickMarker !== 'undefined' ? showFavoritePickMarker : function () {},
     clearFavoritePickMarker: typeof clearFavoritePickMarker !== 'undefined' ? clearFavoritePickMarker : function () {},
+    clearReverseGeocodeMarker: typeof clearReverseGeocodeMarker !== 'undefined' ? clearReverseGeocodeMarker : function () {},
     addPlaceMarkers: addPlaceMarkers,
     addEventMarkers: addEventMarkers,
     clearSearchResult: clearSearchResult,
