@@ -41,7 +41,7 @@
       <!-- Top bar: title + hamburger (visible on mobile only via CSS) -->
       <header class="team13-topbar">
         <span class="team13-topbar-title">سامانه جامع آکسیوم</span>
-        <button type="button" id="hamburger-menu" class="team13-btn-hamburger" aria-label="منو" aria-expanded="false">
+        <button type="button" id="menu-toggle" class="team13-btn-hamburger" aria-label="منو" aria-expanded="false">
           <span></span><span></span><span></span>
         </button>
       </header>
@@ -275,7 +275,7 @@
         });
         var sidebar = document.getElementById("team13-sidebar");
         var overlay = document.getElementById("team13-sidebar-overlay");
-        var hamburger = document.getElementById("hamburger-menu") || document.getElementById("team13-btn-hamburger");
+        var hamburger = document.getElementById("menu-toggle") || document.getElementById("hamburger-menu") || document.querySelector(".team13-btn-hamburger");
         function closeSidebar() {
           if (sidebar) {
             sidebar.classList.remove("team13-sidebar-open");
