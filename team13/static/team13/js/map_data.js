@@ -757,8 +757,35 @@
     flyTo(map, lat, lng, 15);
   }
 
-  // --- Emergency: nearest hospital (DB), nearest fire (Map.ir search) ---
+  // --- Emergency: dedicated button (امداد اضطراری) + legacy hospital/fire if present ---
+  var EMERGENCY_POPUP_MESSAGE = 'جستجو برای نزدیک‌ترین مراکز درمانی و آتش‌نشانی انجام شد. نتایج روی نقشه و لیست زیر نمایش داده می‌شوند.';
+
+  function showEmergencyPopup() {
+    var container = document.getElementById('team13-toast');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'team13-toast';
+      container.className = 'team13-toast';
+      document.body.appendChild(container);
+    }
+    var el = document.createElement('div');
+    el.className = 'team13-toast-item team13-emergency-toast';
+    el.textContent = EMERGENCY_POPUP_MESSAGE;
+    container.appendChild(el);
+    setTimeout(function () {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }, 5000);
+  }
+
   function initEmergencyButtons() {
+    var btnEmergency = document.getElementById('team13-btn-emergency');
+    if (btnEmergency) {
+      btnEmergency.addEventListener('click', function () {
+        triggerNearestHospital();
+        triggerNearestFireStation();
+        showEmergencyPopup();
+      });
+    }
     var btnHospital = document.getElementById('team13-btn-nearest-hospital');
     var btnFire = document.getElementById('team13-btn-nearest-fire');
     if (btnHospital) btnHospital.addEventListener('click', triggerNearestHospital);

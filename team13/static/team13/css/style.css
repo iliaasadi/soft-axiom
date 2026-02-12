@@ -69,18 +69,19 @@ body.team13-map {
   top: 0;
 }
 
-/* Sidebar: forced right, fixed, 350px */
+/* Sidebar: orientation + greeting (Final spec: right, fixed, flex column) */
 .sidebar,
 .team13-sidebar {
   right: 0 !important;
   left: auto !important;
   position: fixed;
-  top: 0;
-  width: 350px;
   height: 100vh;
-  z-index: 1000;
   display: flex;
   flex-direction: column;
+  top: 0;
+  width: 350px;
+  z-index: 1000;
+  justify-content: flex-start;
   background: var(--team13-dark);
   background-color: #1b4332;
   color: #fff;
@@ -88,6 +89,35 @@ body.team13-map {
   overflow-y: auto;
   text-align: right;
   direction: rtl;
+}
+/* Greeting bar (سلام، بهرام): clean space from top and sides */
+.team13-sidebar-greeting {
+  order: -1;
+  padding: 25px 20px 10px 20px !important;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+.team13-sidebar-greeting .auth-user-name {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 500;
+}
+.team13-sidebar-greeting .auth-btn-small {
+  color: #1b4332;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+.team13-sidebar-greeting .auth-btn-small.btn-gold {
+  background: var(--team13-gold);
+  color: #1b4332;
+}
+.team13-sidebar-greeting .auth-btn-small:not(.btn-gold) {
+  background: rgba(255, 255, 255, 0.9);
 }
 .team13-sidebar .team13-panels-wrap,
 .team13-sidebar .team13-panel {
@@ -116,6 +146,54 @@ body.team13-map {
 }
 .team13-home-wrap { padding: 0; }
 .team13-auth { padding: 0; }
+/* Bottom bar: Emergency + Exit, aligned right, gap 15px */
+.team13-sidebar .team13-sidebar-auth-bottom {
+  margin-top: auto !important;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  padding: 15px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+.team13-sidebar .team13-btn-emergency {
+  background-color: #d32f2f !important;
+  color: #ffffff !important;
+  display: inline-block !important;
+  padding: 8px 15px !important;
+  border-radius: 8px !important;
+  font-weight: bold !important;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  transition: filter 0.2s;
+}
+.team13-sidebar .team13-btn-emergency:hover {
+  filter: brightness(1.1);
+  color: #ffffff !important;
+}
+.team13-sidebar .team13-btn-logout {
+  display: inline-block !important;
+  width: auto !important;
+  padding: 8px 20px !important;
+  margin: 0 !important;
+  background-color: #fbc02d !important;
+  color: #1b4332 !important;
+  border-radius: 8px !important;
+  text-decoration: none !important;
+  font-weight: bold !important;
+  border: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: filter 0.2s;
+}
+.team13-sidebar .team13-btn-logout:hover {
+  filter: brightness(1.05);
+  color: #1b4332 !important;
+}
 /* Return Home: ghost button (no bulky green block) */
 .team13-btn-home {
   display: inline-flex;
@@ -344,11 +422,10 @@ body.team13-map {
 .team13-panel .team13-route-mode-label { color: #333; }
 .team13-panel .team13-route-mode-btn {
   width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: block;
   padding: 12px;
   font-size: 0.9rem;
+  text-align: center;
   color: #333;
   border: 1px solid #e0e0e0;
   background: #fff;
@@ -520,6 +597,7 @@ body.team13-map {
   background-color: transparent;
   width: 100%;
 }
+/* Search blocks: stacked layout (Final spec: flex-direction column) */
 .team13-input-btn-row {
   display: flex;
   flex-direction: column;
@@ -529,7 +607,8 @@ body.team13-map {
 .team13-input-with-clear { position: relative; width: 100%; min-width: 0; }
 .team13-sub-options {
   display: flex;
-  gap: 5px;
+  gap: 8px;
+  margin-top: 8px;
   width: 100%;
   flex-wrap: wrap;
 }
@@ -568,13 +647,13 @@ body.team13-map {
   color: #1b4332;
   cursor: pointer;
 }
-/* Transport mode: vertical stack (خودرو, پیاده, دوچرخه) — no overlap */
+/* Transport mode: vertical stack — no overlap */
 .team13-route-mode-wrap {
-  margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   width: 100%;
+  margin-top: 10px;
   box-sizing: border-box;
 }
 .team13-route-mode-label {
@@ -587,11 +666,10 @@ body.team13-map {
 .transport-btn,
 .team13-route-mode-btn {
   width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: block;
   padding: 12px;
   font-size: 0.9rem;
+  text-align: center;
   border: 1px solid #e0e0e0;
   border-radius: 12px;
   background: #fff;
@@ -816,6 +894,10 @@ body.team13-map {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   animation: team13ToastSlideDown 0.3s ease-out;
   pointer-events: auto;
+}
+.team13-emergency-toast {
+  background: rgba(211, 47, 47, 0.95);
+  max-width: 320px;
 }
 @keyframes team13ToastSlideDown {
   from { opacity: 0; transform: translateY(-12px); }
@@ -1052,35 +1134,69 @@ body:not(.team13-map) .team13-footer .footer-links a:hover { text-decoration: un
   body:not(.team13-map) nav a { padding: 8px 14px; font-size: 0.9rem; }
 }
 
-/* ========== Map page: responsive sidebar + hamburger (max-width: 768px) ========== */
-.team13-btn-hamburger {
+/* ========== Map page: responsive sidebar + hamburger (yellow theme, animated) ========== */
+.team13-btn-hamburger,
+#menu-toggle {
   display: none;
   flex-shrink: 0;
   width: 44px;
   height: 44px;
-  padding: 0;
-  border: none;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
+  padding: 10px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background-color: #fbc02d !important;
+  color: #1b4332;
   cursor: pointer;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 5px;
   z-index: 1101;
-  transition: background 0.2s;
+  transition: background 0.2s, opacity 0.3s ease-in-out;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
-.team13-btn-hamburger:hover {
-  background: rgba(255, 255, 255, 0.25);
+.team13-btn-hamburger:hover,
+#menu-toggle:hover {
+  filter: brightness(1.05);
+  background-color: #fbc02d !important;
 }
-.team13-btn-hamburger span {
+.team13-btn-hamburger span,
+#menu-toggle span {
   display: block;
   width: 22px;
   height: 2px;
-  background: currentColor;
+  background-color: #1b4332 !important;
+  background: #1b4332;
   border-radius: 1px;
-  transition: transform 0.2s, opacity 0.2s;
+  transition: all 0.3s ease-in-out;
+}
+/* Active / open state: three lines morph to X */
+.team13-btn-hamburger.is-active span:nth-child(1),
+.team13-btn-hamburger.open span:nth-child(1),
+#menu-toggle.is-active span:nth-child(1),
+#menu-toggle.open span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+.team13-btn-hamburger.is-active span:nth-child(2),
+.team13-btn-hamburger.open span:nth-child(2),
+#menu-toggle.is-active span:nth-child(2),
+#menu-toggle.open span:nth-child(2) {
+  opacity: 0;
+}
+.team13-btn-hamburger.is-active span:nth-child(3),
+.team13-btn-hamburger.open span:nth-child(3),
+#menu-toggle.is-active span:nth-child(3),
+#menu-toggle.open span:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -7px);
+}
+/* Hide hamburger as soon as sidebar is open (body class set by JS) */
+body.team13-sidebar-open .team13-btn-hamburger,
+body.team13-sidebar-open #menu-toggle {
+  display: none !important;
+}
+.team13-btn-hamburger.team13-hamburger-hidden,
+#menu-toggle.team13-hamburger-hidden {
+  display: none !important;
 }
 .team13-sidebar-overlay {
   display: none;
@@ -1151,11 +1267,10 @@ body:not(.team13-map) .team13-footer .footer-links a:hover { text-decoration: un
   .team13-route-mode-wrap .transport-btn,
   .team13-route-mode-wrap .team13-route-mode-btn {
     width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display: block;
     padding: 12px;
     font-size: 0.9rem;
+    text-align: center;
   }
   .team13-input-route,
   .team13-events-city-input,
