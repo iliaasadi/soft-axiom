@@ -843,26 +843,67 @@ body.team13-map {
   background: var(--team13-gold);
   cursor: pointer;
 }
-.team13-discovery-chips {
+/* Around Me: 2-column icon grid, 5px gap, 15px container padding, yellow active */
+.team13-discovery-categories {
+  padding: 15px;
+  box-sizing: border-box;
+}
+.team13-discovery-chips.team13-discovery-category-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-top: 0.35rem;
+  padding: 0;
+}
+.team13-discovery-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 45px;
+  padding: 0 12px 0 14px;
+  font-size: 0.8125rem;
+  border-radius: 12px;
+  background: #fff;
+  border: 2px solid rgba(27, 67, 50, 0.2);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  box-sizing: border-box;
+}
+.team13-discovery-chip input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+.team13-discovery-chip-icon {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.team13-discovery-chip-label {
+  font-weight: 500;
+  color: #333;
+}
+.team13-discovery-chip:has(input:checked) {
+  border-color: #fbc02d;
+  background-color: rgba(251, 192, 45, 0.2);
+  color: #1b4332;
+}
+.team13-discovery-chip:has(input:checked) .team13-discovery-chip-label {
+  color: #1b4332;
+}
+.team13-discovery-chip:hover {
+  border-color: rgba(27, 67, 50, 0.35);
+}
+/* Legacy chips (non-grid) fallback */
+.team13-discovery-chips:not(.team13-discovery-category-grid) {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 0.35rem;
   padding: 10px 0;
   padding-inline-end: 0;
-}
-.team13-discovery-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 10px 10px 14px;
-  font-size: 0.8125rem;
-  border-radius: 12px;
-  background: #fff;
-  border: 1px solid rgba(27, 67, 50, 0.2);
-  cursor: pointer;
-}
-.team13-discovery-chip input {
-  margin-inline-start: 0.35rem;
 }
 .team13-btn-discovery {
   padding: 10px 14px;
@@ -1126,13 +1167,13 @@ body.team13-map {
   color: #1b4332;
   cursor: pointer;
 }
-/* Transport mode: horizontal icon-based selector, 12px gap icon–text, yellow active */
+/* Transport mode: Driving, Cycling, Walking only; 10px gap, 12px radius */
 .team13-route-mode-wrap {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 12px;
+  gap: 10px;
   width: 100%;
   margin-top: 10px;
   box-sizing: border-box;
@@ -1151,6 +1192,7 @@ body.team13-map {
   gap: 12px;
   width: auto;
   min-width: 0;
+  min-height: 45px;
   padding: 10px 14px;
   font-size: 0.9rem;
   text-align: center;
@@ -1315,17 +1357,89 @@ body.team13-map {
   border-color: #9ca3af;
 }
 
-/* Marker popups & route lines: fade-in when added */
-@keyframes team13PopupFadeIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+/* Marker popups & route lines: fade + slide up when popup appears */
+@keyframes team13PopupFadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 @keyframes team13PathFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+/* Custom Leaflet popup: theme-consistent wrapper */
 .leaflet-popup-content-wrapper {
-  animation: team13PopupFadeIn 0.25s ease-out;
+  border-radius: 15px !important;
+  padding: 10px 15px !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  animation: team13PopupFadeSlideUp 0.28s ease-out;
+}
+.leaflet-popup-content {
+  margin: 0;
+  min-width: 120px;
+  font-family: inherit;
+}
+.team13-popup,
+.team13-reverse-popup-content {
+  line-height: 1.6;
+}
+/* Popup address text: smaller, professional */
+.team13-reverse-popup-address,
+.team13-popup .text-muted,
+.team13-popup .team13-popup-address {
+  color: #333 !important;
+  font-size: 0.875rem;
+  line-height: 1.6 !important;
+  margin: 0 0 0.5rem 0;
+}
+/* "حذف نقطه" — red action button */
+.team13-btn-delete-point {
+  color: #d32f2f !important;
+  font-weight: bold !important;
+  text-decoration: none !important;
+  display: inline-block !important;
+  margin-top: 10px !important;
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+  border: 1px solid #d32f2f;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.team13-btn-delete-point:hover {
+  background: rgba(211, 47, 47, 0.1);
+  color: #b71c1c !important;
+}
+/* Leaflet close button: circular, light grey on hover */
+.leaflet-popup-close-button {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  color: #666 !important;
+  font: 22px/28px Tahoma, sans-serif !important;
+  top: 6px !important;
+  right: 6px !important;
+  transition: background 0.2s, color 0.2s;
+}
+.leaflet-container[dir="rtl"] .leaflet-popup-close-button {
+  right: auto !important;
+  left: 6px !important;
+}
+.leaflet-popup-close-button:hover {
+  background: #e0e0e0 !important;
+  color: #333 !important;
+}
+/* Popup tip (pointer): match white container */
+.leaflet-popup-tip {
+  background: #fff !important;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 .leaflet-overlay-pane path {
   animation: team13PathFadeIn 0.4s ease-out;
@@ -1755,7 +1869,7 @@ body.team13-favorite-modal-open #menu-toggle {
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
-    gap: 10px 12px;
+    gap: 10px;
     width: 100%;
     margin-top: 10px;
     box-sizing: border-box;
