@@ -17,6 +17,7 @@ venv/
 # static/media (if you add later)
 staticfiles/
 media/
+team13/contribution_uploads/
 
 # node / frontend later
 node_modules/

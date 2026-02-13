@@ -5,20 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ detail.title_fa|default:detail.title_en|default:"رویداد" }} — امکانات و حمل‌ونقل</title>
-    <link rel="stylesheet" href="{% static 'team13/styles/style.css' %}">
+    <link rel="stylesheet" href="{% static 'team13/css/style.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <h1>{{ detail.title_fa|default:detail.title_en|default:"رویداد" }}</h1>
         {% include "team13/_auth_header.html" %}
-        <nav>
-            <a href="{% url 'team13:index' %}">خانه</a>
-            <a href="{% url 'team13:place_list' %}">مکان‌ها</a>
-            <a href="{% url 'team13:event_list' %}">رویدادها</a>
-            <a href="{% url 'team13:routes' %}">مسیریابی</a>
-            <a href="{% url 'team13:emergency' %}">مراکز امدادی</a>
-        </nav>
+        {% include "team13/_nav.html" %}
 
         <div class="detail-box">
             <p><strong>شهر:</strong> {{ detail.city|default:"—" }} | <strong>آدرس:</strong> {{ detail.address|default:"—" }}</p>
@@ -62,7 +56,7 @@
         <div class="detail-box">
             <h2>تصاویر</h2>
             {% for url in detail.images %}
-            <img src="{{ url }}" alt="" style="max-width: 200px; height: auto; margin: 8px; border-radius: 8px;" />
+            <img src="{{ url }}" alt="تصویر رویداد" loading="lazy" decoding="async" class="team13-img-lazy" style="max-width: 200px; height: auto; margin: 8px; border-radius: 8px;" />
             {% endfor %}
         </div>
         {% endif %}

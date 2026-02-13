@@ -2,6 +2,7 @@
 # توجه: کاربر (User) در core و دیتابیس default است؛ در اینجا فقط user_id ذخیره می‌شود.
 
 import uuid
+from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
@@ -18,6 +19,9 @@ class Place(models.Model):
         HOSPITAL = "hospital", "بیمارستان"
         MUSEUM = "museum", "موزه"
         HOTEL = "hotel", "هتل"
+        FIRE_STATION = "fire_station", "آتش‌نشانی"
+        PHARMACY = "pharmacy", "داروخانه"
+        CLINIC = "clinic", "کلینیک"
 
     place_id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, db_column="place_id"
@@ -96,11 +100,12 @@ class EventTranslation(models.Model):
 
 
 class Image(models.Model):
-    """تصویر مرتبط با یک مکان یا رویداد."""
+    """تصویر مرتبط با یک مکان، رویداد، یا مکان در انتظار تأیید (pending_place)."""
 
     class TargetType(models.TextChoices):
         PLACE = "place", "مکان"
         EVENT = "event", "رویداد"
+        PENDING_PLACE = "pending_place", "مکان در انتظار تأیید"
 
     image_id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, db_column="image_id"
@@ -108,6 +113,7 @@ class Image(models.Model):
     target_type = models.CharField(max_length=16, choices=TargetType.choices)
     target_id = models.UUIDField()
     image_url = models.URLField(max_length=500)
+    is_approved = models.BooleanField(default=False, db_column="is_approved")
 
     class Meta:
         app_label = "team13"
@@ -132,7 +138,9 @@ class Comment(models.Model):
     rating = models.PositiveSmallIntegerField(
         null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
+    body = models.TextField(blank=True)  # متن نظر (کامنت)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_approved = models.BooleanField(default=True, db_column="is_approved")  # امتیاز بدون متن فوراً نمایش؛ نظر متنی پس از تأیید ادمین
 
     class Meta:
         app_label = "team13"
@@ -239,3 +247,81 @@ class RouteLog(models.Model):
 
     def __str__(self):
         return f"{self.source_place_id} → {self.destination_place_id} ({self.travel_mode})"
+
+
+class RouteContribution(models.Model):
+    """پیشنهاد مسیر توسط کاربر؛ پس از تأیید ادمین، دو مکان و یک RouteLog ساخته می‌شود."""
+
+    class TravelMode(models.TextChoices):
+        CAR = "car", "خودرو"
+        WALK = "walk", "پیاده"
+        TRANSIT = "transit", "حمل‌ونقل عمومی"
+
+    contribution_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, db_column="contribution_id"
+    )
+    source_address = models.TextField(help_text="آدرس مبدأ (از روی عرض/طول ثابت شده)")
+    source_latitude = models.FloatField()
+    source_longitude = models.FloatField()
+    destination_address = models.TextField(help_text="آدرس مقصد (از روی عرض/طول ثابت شده)")
+    destination_latitude = models.FloatField()
+    destination_longitude = models.FloatField()
+    travel_mode = models.CharField(max_length=16, choices=TravelMode.choices, default=TravelMode.CAR)
+    user_id = models.UUIDField(null=True, blank=True, db_index=True)
+    is_approved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = "team13"
+        db_table = "team13_route_contributions"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.source_address[:30]} → {self.destination_address[:30]} ({self.get_travel_mode_display()})"
+
+
+class PlaceContribution(models.Model):
+    """پیشنهاد مکان توسط کاربر؛ پس از تأیید به Place تبدیل می‌شود."""
+
+    contribution_id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, db_column="contribution_id"
+    )
+    name_fa = models.CharField(max_length=255)
+    name_en = models.CharField(max_length=255, blank=True)
+    type = models.CharField(max_length=32, choices=Place.PlaceType.choices)
+    address = models.TextField(blank=True)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
+    city = models.CharField(max_length=255, blank=True)
+    submitted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="team13_place_contributions",
+        db_column="submitted_by_id",
+        db_constraint=False,
+    )
+    is_approved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = "team13"
+        db_table = "team13_place_contributions"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.name_fa} ({self.contribution_id})"
+
+
+class TeamAdmin(models.Model):
+    """کاربران مجاز به عنوان ادمین تیم ۱۳ (شناسه کاربر از دیتابیس default، بدون FK برای جلوگیری از خطای cross-DB)."""
+
+    user_id = models.CharField(max_length=64, unique=True, db_index=True, db_column="user_id", null=True, blank=True)
+
+    class Meta:
+        app_label = "team13"
+        db_table = "team13_team_admins"
+
+    def __str__(self):
+        return str(self.user_id)

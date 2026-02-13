@@ -10,7 +10,9 @@ from .models import (
     RestaurantDetails,
     MuseumDetails,
     PlaceAmenity,
+    PlaceContribution,
     RouteLog,
+    TeamAdmin,
 )
 
 
@@ -58,14 +60,39 @@ class EventTranslationAdmin(admin.ModelAdmin):
 
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    list_display = ("image_id", "target_type", "target_id", "image_url")
-    list_filter = ("target_type",)
+    list_display = ("image_id", "target_type", "target_id", "image_url", "is_approved")
+    list_filter = ("target_type", "is_approved")
+    actions = ["approve_selected_images"]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).using("team13")
+
+    @admin.action(description="تأیید تصاویر انتخاب‌شده")
+    def approve_selected_images(self, request, queryset):
+        n = queryset.using("team13").update(is_approved=True)
+        self.message_user(request, f"{n} تصویر تأیید شد.")
 
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ("comment_id", "target_type", "target_id", "rating", "created_at")
-    list_filter = ("target_type", "rating")
+    list_display = ("comment_id", "target_type", "target_id", "rating", "body_preview", "is_approved", "created_at")
+    list_filter = ("target_type", "rating", "is_approved")
+    actions = ["approve_selected_comments"]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).using("team13")
+
+    def body_preview(self, obj):
+        if not obj.body:
+            return "—"
+        return (obj.body[:50] + "…") if len(obj.body) > 50 else obj.body
+
+    body_preview.short_description = "متن نظر"
+
+    @admin.action(description="تأیید نظرات انتخاب‌شده")
+    def approve_selected_comments(self, request, queryset):
+        n = queryset.using("team13").update(is_approved=True)
+        self.message_user(request, f"{n} نظر تأیید شد.")
 
 
 @admin.register(HotelDetails)
@@ -87,6 +114,19 @@ class MuseumDetailsAdmin(admin.ModelAdmin):
 class PlaceAmenityAdmin(admin.ModelAdmin):
     list_display = ("place", "amenity_name")
     list_filter = ("amenity_name",)
+
+
+@admin.register(PlaceContribution)
+class PlaceContributionAdmin(admin.ModelAdmin):
+    list_display = ("contribution_id", "name_fa", "type", "city", "is_approved", "submitted_by", "created_at")
+    list_filter = ("type", "is_approved")
+    search_fields = ("name_fa", "name_en", "address")
+    readonly_fields = ("contribution_id", "created_at")
+
+
+@admin.register(TeamAdmin)
+class TeamAdminAdmin(admin.ModelAdmin):
+    list_display = ("user_id",)
 
 
 @admin.register(RouteLog)

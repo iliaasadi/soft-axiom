@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>رویدادها — امکانات و حمل‌ونقل</title>
-    <link rel="stylesheet" href="{% static 'team13/styles/style.css' %}">
+    <link rel="stylesheet" href="{% static 'team13/css/style.css' %}">
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -13,13 +13,7 @@
         <h1>رویدادها</h1>
         <h3>Facilities & Transportation — گروه Axiom (تیم ۱۳)</h3>
         {% include "team13/_auth_header.html" %}
-        <nav>
-            <a href="{% url 'team13:index' %}">خانه</a>
-            <a href="{% url 'team13:place_list' %}">مکان‌ها</a>
-            <a href="{% url 'team13:event_list' %}">رویدادها</a>
-            <a href="{% url 'team13:routes' %}">مسیریابی</a>
-            <a href="{% url 'team13:emergency' %}">مراکز امدادی</a>
-        </nav>
+        {% include "team13/_nav.html" %}
 
         <div class="card-list">
             {% for e in events %}
