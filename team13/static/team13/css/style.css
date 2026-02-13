@@ -1930,6 +1930,12 @@ body.team13-map {
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2) !important;
 }
 
+/* Plus (crosshair) cursor during point selection modes — consistent over map and labels */
+.selection-active,
+.selection-active * {
+  cursor: crosshair !important;
+}
+
 /* ========== Unified popup container (Soft UI) ========== */
 .leaflet-popup-content-wrapper,
 .leaflet-popup.team13-reverse-popup .leaflet-popup-content-wrapper {

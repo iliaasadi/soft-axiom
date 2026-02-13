@@ -1255,11 +1255,19 @@
     }
   }
 
+  /** Update crosshair cursor class on map container when any point-selection mode is active. */
+  function updateSelectionActiveCursor() {
+    var active = !!(window.isPlacementMode || pickMode || pickModeDiscovery);
+    var container = document.getElementById('map-container');
+    if (container) {
+      if (active) container.classList.add('selection-active');
+      else container.classList.remove('selection-active');
+    }
+  }
+
   function setPickMode(mode) {
     pickMode = mode;
-    var map = getMap();
-    var container = map && map.getContainer && map.getContainer();
-    if (container) container.style.cursor = mode ? 'crosshair' : '';
+    updateSelectionActiveCursor();
     var btnStart = document.getElementById('team13-btn-pick-start');
     var btnDest = document.getElementById('team13-btn-pick-dest');
     if (btnStart) btnStart.classList.toggle('active', mode === 'start');
@@ -1633,8 +1641,7 @@
   // --- Placement mode: add pointer only when user has toggled it via "Select Point" button ---
   function setPlacementModeActive(active) {
     window.isPlacementMode = !!active;
-    var container = document.getElementById('map-container');
-    if (container) container.style.cursor = active ? 'crosshair' : '';
+    updateSelectionActiveCursor();
     var btn = document.getElementById('team13-btn-add-pointer');
     if (btn) btn.classList.toggle('active-btn', active);
   }
@@ -2054,10 +2061,7 @@
     discoveryCenter = null;
     discoveryRadiusKm = 0.5;
     pickModeDiscovery = false;
-    if (map) {
-      var container = map.getContainer && map.getContainer();
-      if (container) container.style.cursor = '';
-    }
+    updateSelectionActiveCursor();
     var btnPick = document.getElementById('team13-discovery-pick-map');
     if (btnPick) btnPick.classList.remove('active');
     var slider = document.getElementById('team13-discovery-radius');
@@ -2211,11 +2215,7 @@
           function (pos) {
             discoveryCenter = { lat: pos.coords.latitude, lng: pos.coords.longitude };
             pickModeDiscovery = false;
-            var map = getMap();
-            if (map) {
-              var container = map.getContainer && map.getContainer();
-              if (container) container.style.cursor = '';
-            }
+            updateSelectionActiveCursor();
             if (btnPick) btnPick.classList.remove('active');
             var radiusKm = parseFloat(slider && slider.value) || 2;
             discoveryRadiusKm = radiusKm;
@@ -2241,11 +2241,7 @@
     if (btnPick) {
       btnPick.addEventListener('click', function () {
         pickModeDiscovery = !pickModeDiscovery;
-        var map = getMap();
-        if (map) {
-          var container = map.getContainer && map.getContainer();
-          if (container) container.style.cursor = pickModeDiscovery ? 'crosshair' : '';
-        }
+        updateSelectionActiveCursor();
         btnPick.classList.toggle('active', pickModeDiscovery);
       });
     }
@@ -2272,8 +2268,7 @@
     var lat = e.latlng.lat;
     var lng = e.latlng.lng;
     pickModeDiscovery = false;
-    var container = map.getContainer && map.getContainer();
-    if (container) container.style.cursor = '';
+    updateSelectionActiveCursor();
     var btnPick = document.getElementById('team13-discovery-pick-map');
     if (btnPick) btnPick.classList.remove('active');
     discoveryCenter = { lat: lat, lng: lng };
