@@ -45,18 +45,26 @@
             {% endif %}
         </div>
 
+        {% if request.GET.msg %}
+        <div class="detail-box team13-detail-message" role="alert">
+            <p>{{ request.GET.msg }}</p>
+        </div>
+        {% endif %}
+
         <div class="detail-box">
             <h2>نظرات و امتیازها</h2>
             <div class="comments-list">
                 {% for c in detail.comments %}
                 <div class="comment-item">
-                    <span class="rating-stars">★ {{ c.rating }}/5</span>
-                    {% if c.created_at %}<span style="color: var(--text-muted); font-size: 0.9rem;"> — {{ c.created_at|date:"Y/m/d H:i" }}</span>{% endif %}
+                    {% if c.rating %}<span class="rating-stars">★ {{ c.rating }}/5</span>{% endif %}
+                    {% if c.body %}<p class="comment-body">{{ c.body }}</p>{% endif %}
+                    {% if c.created_at %}<span style="color: var(--text-muted); font-size: 0.9rem;">{{ c.created_at|date:"Y/m/d H:i" }}</span>{% endif %}
                 </div>
                 {% empty %}
-                <p>هنوز امتیازی ثبت نشده است.</p>
+                <p>هنوز امتیاز یا نظری ثبت نشده است.</p>
                 {% endfor %}
             </div>
+            <p class="team13-detail-hint">امتیاز شما بلافاصله ثبت و نمایش داده می‌شود. نظر متنی و تصاویر پس از تأیید ادمین نمایش داده می‌شوند.</p>
             <form method="post" action="{% url 'team13:place_rate' place.place_id %}" style="margin-top: 16px;">
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url 'team13:place_detail' place.place_id %}" />
@@ -73,16 +81,52 @@
                 </div>
                 <button type="submit" class="btn-submit">ثبت امتیاز</button>
             </form>
+            <hr style="margin: 24px 0 16px 0;" />
+            <h3 style="margin-bottom: 12px;">ثبت نظر (پس از تأیید ادمین نمایش داده می‌شود)</h3>
+            <form method="post" action="{% url 'team13:place_add_comment' place.place_id %}" style="margin-top: 12px;">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'team13:place_detail' place.place_id %}" />
+                <div class="form-group">
+                    <label for="comment-body">متن نظر</label>
+                    <textarea name="body" id="comment-body" class="team13-input-route" rows="4" placeholder="نظر خود را بنویسید..." maxlength="2000"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="comment-rating">امتیاز (اختیاری)</label>
+                    <select name="rating" id="comment-rating">
+                        <option value="">بدون امتیاز</option>
+                        <option value="1">۱</option>
+                        <option value="2">۲</option>
+                        <option value="3">۳</option>
+                        <option value="4">۴</option>
+                        <option value="5">۵</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-submit">ارسال نظر</button>
+            </form>
         </div>
 
-        {% if detail.images %}
         <div class="detail-box">
             <h2>تصاویر</h2>
-            {% for url in detail.images %}
-            <img src="{{ url }}" alt="" style="max-width: 200px; height: auto; margin: 8px; border-radius: 8px;" />
-            {% endfor %}
+            {% if detail.images %}
+            <div class="team13-detail-images">
+                {% for url in detail.images %}
+                <img src="{{ url }}" alt="تصویر مکان" loading="lazy" decoding="async" class="team13-img-lazy" style="max-width: 200px; height: auto; margin: 8px; border-radius: 8px;" />
+                {% endfor %}
+            </div>
+            {% else %}
+            <p>هنوز تصویری ثبت نشده است.</p>
+            {% endif %}
+            <h3 style="margin: 20px 0 12px 0;">افزودن عکس (پس از تأیید ادمین نمایش داده می‌شود)</h3>
+            <form method="post" action="{% url 'team13:place_add_image' place.place_id %}" enctype="multipart/form-data" style="margin-top: 12px;">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'team13:place_detail' place.place_id %}" />
+                <div class="form-group">
+                    <label for="place-image-file">انتخاب تصویر</label>
+                    <input type="file" name="image" id="place-image-file" accept="image/jpeg,image/png,image/gif,image/webp" required />
+                </div>
+                <button type="submit" class="btn-submit">ارسال تصویر</button>
+            </form>
         </div>
-        {% endif %}
 
         <p style="margin-top: 20px;">
             <a href="{% url 'team13:index' %}?action=route&amp;dest_id={{ place.place_id }}&amp;dest_name={{ detail.name_fa|default:detail.name_en|default:'مکان'|urlencode }}&amp;dest_lat={{ detail.latitude }}&amp;dest_lng={{ detail.longitude }}" class="team13-btn-route-from-place">مسیریابی به این مکان</a>

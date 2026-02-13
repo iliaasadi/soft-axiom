@@ -11,13 +11,8 @@
     />
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-    <!-- Leaflet CSS (v1.9.4) -->
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
-    />
+    <!-- نقشهٔ نشان (Mapbox GL SDK) -->
+    <link rel="stylesheet" href="https://static.neshan.org/sdk/mapboxgl/v1.13.2/neshan-sdk/v1.1.5/index.css" />
     <link rel="stylesheet" href="{% static 'team13/css/style.css' %}" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -65,6 +60,14 @@
                 <span class="team13-btn-home-label">بازگشت به خانه</span>
               </button>
             </div>
+            <button
+              type="button"
+              class="sidebar-tab team13-tab-btn flex-1"
+              data-tab="advanced-search"
+              aria-selected="false"
+              >
+              <a href="{% url 'team13:place_list' %}?advanced=1" class="team13-nav-btn{% if request.resolver_match.url_name == 'place_list' %} team13-nav-active{% endif %}">جستجوی پیشرفته</a>
+            </button>
           </div>
           <div class="team13-tabs flex border-b" role="tablist">
             <button
@@ -72,7 +75,9 @@
               class="sidebar-tab team13-tab-btn active flex-1"
               data-tab="events"
               aria-selected="true"
-            >
+             
+           
+              >
               رویدادها
             </button>
             <button
@@ -88,9 +93,10 @@
               class="sidebar-tab team13-tab-btn flex-1"
               data-tab="discovery"
               aria-selected="false"
-            >
-              اطراف من
+            
+              <a href="{% url 'team13:place_list' %}" class="team13-nav-btn{% if request.resolver_match.url_name == 'place_list' %} team13-nav-active{% endif %}">اطراف من</a>
             </button>
+            
           </div>
           <div class="team13-panels-wrap flex-1 overflow-hidden flex flex-col min-h-0">
             <section
@@ -199,6 +205,10 @@
                 <button type="button" id="team13-discovery-deselect" class="team13-btn-discovery-deselect" title="حذف دایره و نشانگرها">انصراف</button>
               </div>
             </section>
+          </div>
+          <div id="team13-sidebar-search-results-wrap" class="team13-sidebar-search-results-wrap" hidden>
+            <p class="team13-sidebar-search-results-title">نتایج جستجو</p>
+            <div id="team13-sidebar-search-results" class="team13-sidebar-search-results"></div>
           </div>
           <div class="team13-sidebar-auth-bottom">
             <button type="button" id="team13-btn-emergency" class="team13-btn-emergency" aria-label="امداد اضطراری">امداد اضطراری</button>
@@ -326,7 +336,7 @@
         <div id="team13-modal-contribution" class="team13-modal-overlay team13-modal-contribution-wrap" role="dialog" aria-labelledby="team13-modal-contribution-title" aria-modal="true" hidden>
           <div class="team13-modal team13-modal-contribution" dir="rtl">
             <h2 id="team13-modal-contribution-title" class="team13-modal-title team13-modal-contribution-title">ثبت مکان جدید</h2>
-            <p class="team13-modal-contribution-hint">مختصات از روی نقشه (کلیک معمولی یا طولانی) پر می‌شوند.</p>
+            <p class="team13-modal-contribution-hint">ابتدا روی نقشه کلیک کنید تا دکمهٔ سبز نمایش داده شود، سپس روی «ادامه» کلیک کنید. طول و عرض جغرافیایی همان نقطه به‌صورت خودکار ثابت می‌شود و آدرس پس از تأیید ادمین بر اساس موقعیت و دسته‌بندی در دیتابیس ذخیره می‌شود.</p>
             <form id="team13-form-contribution" class="team13-form-contribution" enctype="multipart/form-data">
               {% csrf_token %}
               <input type="hidden" id="team13-contribution-lat" name="latitude" value="" />
@@ -347,16 +357,15 @@
                   <option value="hospital">بیمارستان</option>
                   <option value="museum">موزه</option>
                   <option value="entertainment">تفریحی</option>
+                  <option value="fire_station">آتش‌نشانی</option>
+                  <option value="pharmacy">داروخانه</option>
+                  <option value="clinic">کلینیک</option>
                 </select>
               </div>
               <div class="team13-form-row">
-                <label class="team13-field-label" for="team13-contribution-address">آدرس (اختیاری)</label>
-                <input type="text" id="team13-contribution-address" name="address" class="team13-input-route team13-contribution-input" placeholder="خیابان، پلاک، شهر" maxlength="500" />
-              </div>
-              <div class="team13-form-row">
-                <label class="team13-field-label" for="team13-contribution-image">تصویر مکان</label>
+                <label class="team13-field-label" for="team13-contribution-image">تصویر مکان (اختیاری)</label>
                 <input type="file" id="team13-contribution-image" name="image" class="team13-contribution-file" accept="image/jpeg,image/png,image/gif,image/webp" />
-                <span class="team13-contribution-file-hint">JPG، PNG، GIF یا WebP (اختیاری)</span>
+                <span class="team13-contribution-file-hint">JPG، PNG، GIF یا WebP.</span>
               </div>
               <div class="team13-modal-actions team13-contribution-actions">
                 <button type="submit" id="team13-contribution-submit" class="team13-btn-contribution-submit">ثبت پیشنهاد</button>
@@ -364,6 +373,127 @@
               </div>
             </form>
             <div id="team13-contribution-message" class="team13-contribution-message" hidden></div>
+          </div>
+        </div>
+
+        <!-- مودال گزینه‌های مکان موجود: جزئیات + امتیاز / نظر / عکس -->
+        <div id="team13-modal-place-actions" class="team13-modal-overlay team13-modal-contribution-wrap" role="dialog" aria-labelledby="team13-place-actions-title" aria-modal="true" hidden>
+          <div class="team13-modal team13-modal-contribution team13-modal-place-details-wrap" dir="rtl">
+            <h2 id="team13-place-actions-title" class="team13-modal-title">مکان: <span id="team13-place-actions-name"></span></h2>
+            <div id="team13-place-actions-details" class="team13-place-details-content">
+              <p class="team13-place-details-loading" id="team13-place-details-loading">در حال بارگذاری جزئیات…</p>
+              <div id="team13-place-details-body" class="team13-place-details-body" hidden></div>
+              <p class="team13-place-details-error" id="team13-place-details-error" hidden>اطلاعات این مکان در دسترس نیست.</p>
+            </div>
+            <p class="team13-modal-contribution-hint">می‌توانید امتیاز بدهید، نظر بگذارید یا تصویر اضافه کنید.</p>
+            <input type="hidden" id="team13-place-actions-place-id" value="" />
+            <input type="hidden" id="team13-place-actions-lat" value="" />
+            <input type="hidden" id="team13-place-actions-lng" value="" />
+            <div class="team13-modal-actions team13-contribution-actions">
+              <button type="button" id="team13-place-actions-rate" class="team13-btn-contribution-submit">امتیاز دادن</button>
+              <button type="button" id="team13-place-actions-comment" class="team13-btn-contribution-submit">ثبت نظر (کامنت)</button>
+              <button type="button" id="team13-place-actions-add-image" class="team13-btn-contribution-submit">اضافه کردن عکس</button>
+              <button type="button" class="team13-btn-modal-close" data-close="team13-modal-place-actions">انصراف</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- مودال ثبت نظر (کامنت) برای مکان موجود -->
+        <div id="team13-modal-place-add-comment" class="team13-modal-overlay team13-modal-contribution-wrap" role="dialog" aria-labelledby="team13-place-add-comment-title" aria-modal="true" hidden>
+          <div class="team13-modal team13-modal-contribution" dir="rtl">
+            <h2 id="team13-place-add-comment-title" class="team13-modal-title">ثبت نظر برای مکان</h2>
+            <form id="team13-form-place-add-comment">
+              {% csrf_token %}
+              <input type="hidden" id="team13-place-add-comment-place-id" name="place_id" value="" />
+              <div class="team13-form-row">
+                <label class="team13-field-label" for="team13-place-add-comment-body">متن نظر <span class="team13-required">*</span></label>
+                <textarea id="team13-place-add-comment-body" name="body" class="team13-input-route team13-contribution-input" rows="4" placeholder="نظر خود را بنویسید..." maxlength="2000"></textarea>
+              </div>
+              <div class="team13-form-row">
+                <label class="team13-field-label">امتیاز (اختیاری)</label>
+                <div class="team13-rate-stars" id="team13-place-add-comment-stars">
+                  <button type="button" data-rating="1" aria-label="۱ ستاره">۱</button>
+                  <button type="button" data-rating="2" aria-label="۲ ستاره">۲</button>
+                  <button type="button" data-rating="3" aria-label="۳ ستاره">۳</button>
+                  <button type="button" data-rating="4" aria-label="۴ ستاره">۴</button>
+                  <button type="button" data-rating="5" aria-label="۵ ستاره">۵</button>
+                </div>
+              </div>
+              <div class="team13-modal-actions team13-contribution-actions">
+                <button type="submit" id="team13-place-add-comment-submit" class="team13-btn-contribution-submit">ثبت نظر</button>
+                <button type="button" class="team13-btn-modal-close" data-close="team13-modal-place-add-comment">انصراف</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- مودال امتیاز به مکان موجود -->
+        <div id="team13-modal-place-rate" class="team13-modal-overlay team13-modal-contribution-wrap" role="dialog" aria-labelledby="team13-place-rate-title" aria-modal="true" hidden>
+          <div class="team13-modal team13-modal-contribution" dir="rtl">
+            <h2 id="team13-place-rate-title" class="team13-modal-title">امتیاز به مکان</h2>
+            <input type="hidden" id="team13-place-rate-place-id" value="" />
+            <input type="hidden" id="team13-place-rate-lat" value="" />
+            <input type="hidden" id="team13-place-rate-lng" value="" />
+            <div class="team13-form-row">
+              <label class="team13-field-label">امتیاز (۱ تا ۵)</label>
+              <div class="team13-rate-stars" id="team13-place-rate-stars">
+                <button type="button" data-rating="1" aria-label="۱ ستاره">۱</button>
+                <button type="button" data-rating="2" aria-label="۲ ستاره">۲</button>
+                <button type="button" data-rating="3" aria-label="۳ ستاره">۳</button>
+                <button type="button" data-rating="4" aria-label="۴ ستاره">۴</button>
+                <button type="button" data-rating="5" aria-label="۵ ستاره">۵</button>
+              </div>
+            </div>
+            <div class="team13-modal-actions team13-contribution-actions">
+              <button type="button" id="team13-place-rate-submit" class="team13-btn-contribution-submit">ثبت امتیاز</button>
+              <button type="button" class="team13-btn-modal-close" data-close="team13-modal-place-rate">انصراف</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- مودال افزودن عکس به مکان موجود -->
+        <div id="team13-modal-place-add-image" class="team13-modal-overlay team13-modal-contribution-wrap" role="dialog" aria-labelledby="team13-place-add-image-title" aria-modal="true" hidden>
+          <div class="team13-modal team13-modal-contribution" dir="rtl">
+            <h2 id="team13-place-add-image-title" class="team13-modal-title">افزودن عکس به مکان</h2>
+            <p class="team13-modal-contribution-hint">مختصات این نقطه به‌صورت پیش‌فرض در نظر گرفته می‌شود.</p>
+            <form id="team13-form-place-add-image" enctype="multipart/form-data">
+              {% csrf_token %}
+              <input type="hidden" id="team13-place-add-image-place-id" name="place_id" value="" />
+              <input type="hidden" id="team13-place-add-image-lat" value="" />
+              <input type="hidden" id="team13-place-add-image-lng" value="" />
+              <div class="team13-form-row">
+                <label class="team13-field-label" for="team13-place-add-image-file">تصویر</label>
+                <input type="file" id="team13-place-add-image-file" name="image" class="team13-contribution-file" accept="image/jpeg,image/png,image/gif,image/webp" required />
+              </div>
+              <div class="team13-modal-actions team13-contribution-actions">
+                <button type="submit" id="team13-place-add-image-submit" class="team13-btn-contribution-submit">ارسال تصویر</button>
+                <button type="button" class="team13-btn-modal-close" data-close="team13-modal-place-add-image">انصراف</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- مودال امداد اضطراری: انتخاب منبع موقعیت -->
+        <div id="team13-modal-emergency-source" class="team13-modal-overlay team13-modal-contribution-wrap" role="dialog" aria-labelledby="team13-emergency-source-title" aria-modal="true" hidden>
+          <div class="team13-modal team13-modal-contribution" dir="rtl">
+            <h2 id="team13-emergency-source-title" class="team13-modal-title">امداد اضطراری — انتخاب موقعیت جستجو</h2>
+            <p class="team13-modal-contribution-hint">مراکز امدادی از دیتابیس ما (بیمارستان، آتش‌نشانی، داروخانه، کلینیک) در شعاع ۱۰ کیلومتر نمایش داده می‌شوند. در صورت در دسترس نبودن موقعیت شما، جستجو بر اساس مرکز نقشه انجام می‌شود.</p>
+            <div class="team13-modal-actions team13-contribution-actions">
+              <button type="button" id="team13-emergency-use-live" class="team13-btn-contribution-submit">موقعیت زنده من (GPS)</button>
+              <button type="button" id="team13-emergency-pick-map" class="team13-btn-contribution-submit">انتخاب از روی نقشه</button>
+              <button type="button" class="team13-btn-modal-close" data-close="team13-modal-emergency-source">انصراف</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- مودال نتایج امداد اضطراری -->
+        <div id="team13-modal-emergency-results" class="team13-modal-overlay team13-modal-contribution-wrap" role="dialog" aria-labelledby="team13-emergency-results-title" aria-modal="true" hidden>
+          <div class="team13-modal team13-modal-contribution team13-emergency-results-modal" dir="rtl">
+            <h2 id="team13-emergency-results-title" class="team13-modal-title">مراکز امدادی در شعاع ۱۰ کیلومتر</h2>
+            <div id="team13-emergency-results-list" class="team13-emergency-results-list"></div>
+            <div class="team13-modal-actions team13-contribution-actions">
+              <button type="button" class="team13-btn-modal-close" data-close="team13-modal-emergency-results">بستن</button>
+            </div>
           </div>
         </div>
 
@@ -388,23 +518,31 @@
           <div
             id="map-container"
             class="team13-map-wrap absolute inset-0"
-          ></div>
-          <button type="button" id="team13-btn-center-me" class="team13-btn-center-me" aria-label="مکان من" title="مرکز روی من">
+          >
+            {% if not NESHAN_MAP_KEY %}
+            <p class="team13-map-no-key" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;margin:0;padding:1rem;text-align:center;color:#666;font-size:0.95rem;z-index:1;">برای نمایش نقشهٔ نشان، کلید وب (NESHAN_API_KEY_WEB) را در فایل .env تنظیم کنید.</p>
+            {% endif %}
+          </div>
+          <button type="button" id="team13-btn-center-me" class="team13-btn-center-me" aria-label="موقعیت زنده من" title="نمایش موقعیت من روی نقشه (لایو)">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          </button>
+          <button type="button" id="team13-btn-poi-toggle" class="team13-btn-poi-toggle team13-btn-poi-toggle-on" aria-label="پنهان کردن آیکون مکان‌ها" title="نمایش/پنهان کردن آیکون مکان‌ها و رویدادها روی نقشه">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
           </button>
           <div id="team13-toast" class="team13-toast" aria-live="polite"></div>
         </main>
       </div>
     </div>
 
-    <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-      crossorigin=""
-    ></script>
-    <!-- Required for Map.ir route geometry decoding (polyline.decode) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox-polyline/1.1.1/polyline.js"></script>
+    <script>
+      window.NESHAN_MAP_KEY = "{{ NESHAN_MAP_KEY|escapejs }}";
+      window.TEAM13_API_BASE = "{% url 'team13:index' %}".replace(/\/?$/, '');
+    </script>
+    <script src="https://static.neshan.org/sdk/mapboxgl/v1.13.2/neshan-sdk/v1.1.5/index.js"></script>
+    <!-- دیکد کردن polyline مسیر نشان (مطابق مستندات رسم مسیر) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mapbox-polyline/1.2.1/polyline.js"></script>
     <script src="{% static 'team13/js/api_client.js' %}"></script>
+    <script src="{% static 'team13/js/neshan_map.js' %}"></script>
     <script src="{% static 'team13/js/map_init.js' %}"></script>
     <script src="{% static 'team13/js/map_data.js' %}"></script>
     <script>
@@ -571,14 +709,14 @@
 
         function showModal(el) {
           if (el) { el.hidden = false; el.classList.add("team13-modal-open"); }
-          if (el && (el.id === "team13-modal-add-favorite" || el.id === "team13-modal-favorites-list" || el.id === "team13-modal-route-start" || el.id === "team13-modal-favorite-details" || el.id === "team13-modal-contribution"))
+          if (el && ["team13-modal-add-favorite","team13-modal-favorites-list","team13-modal-route-start","team13-modal-favorite-details","team13-modal-contribution","team13-modal-place-actions","team13-modal-place-rate","team13-modal-place-add-image","team13-modal-place-add-comment","team13-modal-emergency-source","team13-modal-emergency-results"].indexOf(el.id) !== -1)
             document.body.classList.add("team13-favorite-modal-open");
         }
         function hideModal(el) {
           if (el) { el.hidden = true; el.classList.remove("team13-modal-open"); }
           if (el && el.id === "team13-modal-add-favorite" && window.Team13MapData && typeof window.Team13MapData.clearFavoritePickMarker === "function")
             window.Team13MapData.clearFavoritePickMarker();
-          if (el && (el.id === "team13-modal-add-favorite" || el.id === "team13-modal-favorites-list" || el.id === "team13-modal-route-start" || el.id === "team13-modal-favorite-details" || el.id === "team13-modal-contribution"))
+          if (el && ["team13-modal-add-favorite","team13-modal-favorites-list","team13-modal-route-start","team13-modal-favorite-details","team13-modal-contribution","team13-modal-place-actions","team13-modal-place-rate","team13-modal-place-add-image","team13-modal-place-add-comment","team13-modal-emergency-source","team13-modal-emergency-results"].indexOf(el.id) !== -1)
             document.body.classList.remove("team13-favorite-modal-open");
         }
 
@@ -693,6 +831,287 @@
                 .catch(function () {
                   if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "ثبت پیشنهاد"; }
                   if (msgEl) { msgEl.textContent = "خطا در ارتباط با سرور."; msgEl.hidden = false; msgEl.className = "team13-contribution-message team13-contribution-message-error"; }
+                  if (window.showToast) window.showToast("خطا در ارتباط با سرور.");
+                });
+            });
+          }
+        })();
+
+        (function () {
+          var team13Base = "{% url 'team13:index' %}".replace(/\/?$/, '');
+          var modalActions = document.getElementById("team13-modal-place-actions");
+          var modalRate = document.getElementById("team13-modal-place-rate");
+          var modalAddImage = document.getElementById("team13-modal-place-add-image");
+          var actionsName = document.getElementById("team13-place-actions-name");
+          var actionsPlaceId = document.getElementById("team13-place-actions-place-id");
+          var actionsLat = document.getElementById("team13-place-actions-lat");
+          var actionsLng = document.getElementById("team13-place-actions-lng");
+          var ratePlaceId = document.getElementById("team13-place-rate-place-id");
+          var rateLat = document.getElementById("team13-place-rate-lat");
+          var rateLng = document.getElementById("team13-place-rate-lng");
+          var rateStars = document.getElementById("team13-place-rate-stars");
+          var rateSubmit = document.getElementById("team13-place-rate-submit");
+          var addImagePlaceId = document.getElementById("team13-place-add-image-place-id");
+          var addImageLat = document.getElementById("team13-place-add-image-lat");
+          var addImageLng = document.getElementById("team13-place-add-image-lng");
+          var formAddImage = document.getElementById("team13-form-place-add-image");
+          var modalAddComment = document.getElementById("team13-modal-place-add-comment");
+          var addCommentPlaceId = document.getElementById("team13-place-add-comment-place-id");
+          var formAddComment = document.getElementById("team13-form-place-add-comment");
+          var addCommentStars = document.getElementById("team13-place-add-comment-stars");
+          var currentRating = 0;
+          var commentRating = 0;
+
+          function getCsrf() {
+            var name = "csrftoken";
+            var cookies = document.cookie ? document.cookie.split(";") : [];
+            for (var i = 0; i < cookies.length; i++) {
+              var parts = cookies[i].trim().split("=");
+              if (parts[0] === name) return parts.slice(1).join("=").trim();
+            }
+            var el = document.querySelector("[name=csrfmiddlewaretoken]");
+            return el ? el.value : "";
+          }
+
+          function renderPlaceDetails(data) {
+            var bodyEl = document.getElementById("team13-place-details-body");
+            var loadingEl = document.getElementById("team13-place-details-loading");
+            var errorEl = document.getElementById("team13-place-details-error");
+            if (!bodyEl) return;
+            if (loadingEl) loadingEl.hidden = true;
+            if (errorEl) errorEl.hidden = true;
+            bodyEl.hidden = false;
+            var nameFa = (data.translations && data.translations.fa && data.translations.fa.name) ? data.translations.fa.name : (data.name_fa || data.name_en || "مکان");
+            var parts = [];
+            parts.push("<p class=\"team13-place-detail-row\"><strong>نوع:</strong> " + (data.type_display || data.type || "—") + "</p>");
+            if (data.city) parts.push("<p class=\"team13-place-detail-row\"><strong>شهر:</strong> " + data.city + "</p>");
+            if (data.address) parts.push("<p class=\"team13-place-detail-row\"><strong>آدرس:</strong> " + data.address + "</p>");
+            if (data.average_rating != null) parts.push("<p class=\"team13-place-detail-row\"><strong>میانگین امتیاز:</strong> " + data.average_rating + " از ۵ (" + (data.rating_count || 0) + " امتیاز)</p>");
+            if (data.hotel) parts.push("<p class=\"team13-place-detail-row\"><strong>هتل:</strong> " + (data.hotel.stars ? data.hotel.stars + " ستاره" : "") + (data.hotel.price_range ? " | " + data.hotel.price_range : "") + "</p>");
+            if (data.restaurant) parts.push("<p class=\"team13-place-detail-row\"><strong>رستوران:</strong> " + (data.restaurant.cuisine || "") + (data.restaurant.avg_price ? " | قیمت متوسط: " + data.restaurant.avg_price : "") + "</p>");
+            if (data.museum) parts.push("<p class=\"team13-place-detail-row\"><strong>موزه:</strong> " + (data.museum.open_at || "") + " تا " + (data.museum.close_at || "") + (data.museum.ticket_price ? " | بلیط: " + data.museum.ticket_price : "") + "</p>");
+            if (data.amenities && data.amenities.length) parts.push("<p class=\"team13-place-detail-row\"><strong>امکانات:</strong> " + data.amenities.join("، ") + "</p>");
+            if (data.comments && data.comments.length) {
+              parts.push("<p class=\"team13-place-detail-row\"><strong>نظرات:</strong></p><div class=\"team13-place-details-comments\">");
+              data.comments.slice(0, 10).forEach(function(c) {
+                parts.push("<div class=\"team13-place-detail-comment\">");
+                if (c.rating) parts.push("<span class=\"team13-detail-rating\">★ " + c.rating + "/5</span> ");
+                if (c.body) parts.push("<span>" + c.body.replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</span>");
+                if (c.created_at) parts.push(" <span class=\"team13-detail-date\">" + c.created_at.slice(0, 10) + "</span>");
+                parts.push("</div>");
+              });
+              if (data.comments.length > 10) parts.push("<p>… و " + (data.comments.length - 10) + " نظر دیگر</p>");
+              parts.push("</div>");
+            }
+            if (data.images && data.images.length) {
+              parts.push("<p class=\"team13-place-detail-row\"><strong>تصاویر:</strong></p><div class=\"team13-place-details-images\">");
+              data.images.slice(0, 6).forEach(function(url) {
+                parts.push("<img src=\"" + url.replace(/"/g, "&quot;") + "\" alt=\"\" class=\"team13-place-detail-img\" loading=\"lazy\" />");
+              });
+              parts.push("</div>");
+            }
+            bodyEl.innerHTML = parts.join("");
+          }
+
+          window.Team13OpenPlaceActionsModal = function (placeId, name, lat, lng) {
+            if (actionsName) actionsName.textContent = name || "مکان";
+            if (actionsPlaceId) actionsPlaceId.value = placeId || "";
+            if (actionsLat) actionsLat.value = lat != null ? lat : "";
+            if (actionsLng) actionsLng.value = lng != null ? lng : "";
+            var loadingEl = document.getElementById("team13-place-details-loading");
+            var bodyEl = document.getElementById("team13-place-details-body");
+            var errorEl = document.getElementById("team13-place-details-error");
+            if (loadingEl) { loadingEl.hidden = false; }
+            if (bodyEl) { bodyEl.hidden = true; bodyEl.innerHTML = ""; }
+            if (errorEl) errorEl.hidden = true;
+            if (modalActions) showModal(modalActions);
+            if (!placeId) {
+              if (loadingEl) loadingEl.hidden = true;
+              if (errorEl) errorEl.hidden = false;
+              return;
+            }
+            fetch(team13Base + "/places/" + placeId + "/", { method: "GET", headers: { "Accept": "application/json" }, credentials: "same-origin" })
+              .then(function (r) {
+                if (!r.ok) throw new Error(r.status);
+                return r.json();
+              })
+              .then(function (data) {
+                renderPlaceDetails(data);
+              })
+              .catch(function () {
+                if (loadingEl) loadingEl.hidden = true;
+                if (bodyEl) bodyEl.hidden = true;
+                if (errorEl) errorEl.hidden = false;
+              });
+          };
+
+          if (document.getElementById("team13-place-actions-rate")) {
+            document.getElementById("team13-place-actions-rate").addEventListener("click", function () {
+              if (modalActions) hideModal(modalActions);
+              if (ratePlaceId) ratePlaceId.value = actionsPlaceId ? actionsPlaceId.value : "";
+              if (rateLat) rateLat.value = actionsLat ? actionsLat.value : "";
+              if (rateLng) rateLng.value = actionsLng ? actionsLng.value : "";
+              currentRating = 0;
+              if (rateStars) {
+                [].forEach.call(rateStars.querySelectorAll("button"), function (b) { b.classList.remove("team13-rate-selected"); });
+              }
+              if (modalRate) showModal(modalRate);
+            });
+          }
+          if (document.getElementById("team13-place-actions-comment")) {
+            document.getElementById("team13-place-actions-comment").addEventListener("click", function () {
+              if (modalActions) hideModal(modalActions);
+              if (addCommentPlaceId) addCommentPlaceId.value = actionsPlaceId ? actionsPlaceId.value : "";
+              if (formAddComment) formAddComment.reset();
+              commentRating = 0;
+              if (addCommentStars) [].forEach.call(addCommentStars.querySelectorAll("button"), function (b) { b.classList.remove("team13-rate-selected"); });
+              if (modalAddComment) showModal(modalAddComment);
+            });
+          }
+          if (document.getElementById("team13-place-actions-add-image")) {
+            document.getElementById("team13-place-actions-add-image").addEventListener("click", function () {
+              if (modalActions) hideModal(modalActions);
+              if (addImagePlaceId) addImagePlaceId.value = actionsPlaceId ? actionsPlaceId.value : "";
+              if (addImageLat) addImageLat.value = actionsLat ? actionsLat.value : "";
+              if (addImageLng) addImageLng.value = actionsLng ? actionsLng.value : "";
+              if (formAddImage) formAddImage.reset();
+              if (modalAddImage) showModal(modalAddImage);
+            });
+          }
+          if (addCommentStars) {
+            addCommentStars.addEventListener("click", function (e) {
+              var btn = e.target.closest("button[data-rating]");
+              if (!btn) return;
+              commentRating = parseInt(btn.getAttribute("data-rating"), 10);
+              [].forEach.call(addCommentStars.querySelectorAll("button"), function (b) { b.classList.remove("team13-rate-selected"); });
+              btn.classList.add("team13-rate-selected");
+            });
+          }
+          if (formAddComment) {
+            formAddComment.addEventListener("submit", function (e) {
+              e.preventDefault();
+              var pid = addCommentPlaceId && addCommentPlaceId.value ? addCommentPlaceId.value : "";
+              if (!pid) return;
+              var bodyEl = document.getElementById("team13-place-add-comment-body");
+              var body = (bodyEl && bodyEl.value) ? bodyEl.value.trim() : "";
+              if (!body && commentRating < 1) {
+                if (window.showToast) window.showToast("متن نظر یا امتیاز را وارد کنید.");
+                return;
+              }
+              var url = team13Base + "/places/" + pid + "/add-comment/";
+              var formData = new URLSearchParams();
+              formData.set("csrfmiddlewaretoken", getCsrf());
+              formData.set("body", body);
+              if (commentRating >= 1 && commentRating <= 5) formData.set("rating", commentRating);
+              var submitBtn = document.getElementById("team13-place-add-comment-submit");
+              if (submitBtn) submitBtn.disabled = true;
+              fetch(url, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": getCsrf(), "Accept": "application/json" }, body: formData.toString(), credentials: "same-origin" })
+                .then(function (r) {
+                  if (r.status === 401) return { ok: false, needLogin: true };
+                  return r.json().then(function (data) { return { ok: r.ok, data: data, status: r.status }; });
+                })
+                .then(function (result) {
+                  if (submitBtn) submitBtn.disabled = false;
+                  if (result.needLogin) {
+                    if (window.showToast) window.showToast("برای ثبت نظر وارد حساب خود شوید.");
+                    return;
+                  }
+                  if (result.ok && result.data && result.data.message) {
+                    if (window.showToast) window.showToast(result.data.message);
+                    if (modalAddComment) hideModal(modalAddComment);
+                    formAddComment.reset();
+                    commentRating = 0;
+                  } else {
+                    var err = (result.data && result.data.error) ? result.data.error : "خطا در ثبت نظر.";
+                    if (window.showToast) window.showToast(err);
+                  }
+                })
+                .catch(function () {
+                  if (submitBtn) submitBtn.disabled = false;
+                  if (window.showToast) window.showToast("خطا در ارتباط با سرور.");
+                });
+            });
+          }
+
+          if (rateStars) {
+            rateStars.addEventListener("click", function (e) {
+              var btn = e.target.closest("button[data-rating]");
+              if (!btn) return;
+              currentRating = parseInt(btn.getAttribute("data-rating"), 10);
+              [].forEach.call(rateStars.querySelectorAll("button"), function (b) { b.classList.remove("team13-rate-selected"); });
+              btn.classList.add("team13-rate-selected");
+            });
+          }
+          if (rateSubmit) {
+            rateSubmit.addEventListener("click", function () {
+              if (currentRating < 1 || currentRating > 5) {
+                if (window.showToast) window.showToast("لطفاً امتیاز ۱ تا ۵ انتخاب کنید.");
+                return;
+              }
+              var pid = ratePlaceId && ratePlaceId.value ? ratePlaceId.value : "";
+              if (!pid) return;
+              var url = team13Base + "/places/" + pid + "/rate/";
+              var body = new URLSearchParams({ rating: currentRating, csrfmiddlewaretoken: getCsrf() });
+              var headers = { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": getCsrf(), "Accept": "application/json" };
+              rateSubmit.disabled = true;
+              fetch(url, { method: "POST", headers: headers, body: body.toString(), credentials: "same-origin" })
+                .then(function (r) {
+                  rateSubmit.disabled = false;
+                  if (r.status === 401) {
+                    if (window.showToast) window.showToast("برای ثبت امتیاز وارد حساب خود شوید.");
+                    return;
+                  }
+                  if (r.ok || r.status === 302) {
+                    if (window.showToast) window.showToast("امتیاز ثبت شد.");
+                    if (modalRate) hideModal(modalRate);
+                  } else {
+                    if (window.showToast) window.showToast("خطا در ثبت امتیاز.");
+                  }
+                })
+                .catch(function () {
+                  rateSubmit.disabled = false;
+                  if (window.showToast) window.showToast("خطا در ارتباط با سرور.");
+                });
+            });
+          }
+
+          if (formAddImage) {
+            formAddImage.addEventListener("submit", function (e) {
+              e.preventDefault();
+              var pid = addImagePlaceId && addImagePlaceId.value ? addImagePlaceId.value : "";
+              if (!pid) return;
+              var fileInput = document.getElementById("team13-place-add-image-file");
+              if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+                if (window.showToast) window.showToast("لطفاً یک تصویر انتخاب کنید.");
+                return;
+              }
+              var url = team13Base + "/places/" + pid + "/add-image/";
+              var formData = new FormData(formAddImage);
+              formData.set("csrfmiddlewaretoken", getCsrf());
+              var submitBtn = document.getElementById("team13-place-add-image-submit");
+              if (submitBtn) submitBtn.disabled = true;
+              fetch(url, { method: "POST", headers: { "X-CSRFToken": getCsrf(), "Accept": "application/json" }, body: formData, credentials: "same-origin" })
+                .then(function (r) {
+                  if (r.status === 401) return { ok: false, needLogin: true };
+                  return r.json().then(function (data) { return { ok: r.ok, data: data }; });
+                })
+                .then(function (result) {
+                  if (submitBtn) submitBtn.disabled = false;
+                  if (result.needLogin) {
+                    if (window.showToast) window.showToast("برای افزودن عکس وارد حساب خود شوید.");
+                    return;
+                  }
+                  if (result.ok && result.data && result.data.message) {
+                    if (window.showToast) window.showToast(result.data.message);
+                    if (modalAddImage) hideModal(modalAddImage);
+                    formAddImage.reset();
+                  } else {
+                    var err = (result.data && result.data.error) ? result.data.error : "خطا در ارسال تصویر.";
+                    if (window.showToast) window.showToast(err);
+                  }
+                })
+                .catch(function () {
+                  if (submitBtn) submitBtn.disabled = false;
                   if (window.showToast) window.showToast("خطا در ارتباط با سرور.");
                 });
             });
@@ -1003,7 +1422,7 @@
               overlay.classList.remove("team13-modal-open");
               if (overlay.id === "team13-modal-add-favorite" && window.Team13MapData && typeof window.Team13MapData.clearFavoritePickMarker === "function")
                 window.Team13MapData.clearFavoritePickMarker();
-              if (["team13-modal-add-favorite","team13-modal-favorites-list","team13-modal-route-start","team13-modal-favorite-details","team13-modal-contribution"].indexOf(overlay.id) !== -1)
+              if (["team13-modal-add-favorite","team13-modal-favorites-list","team13-modal-route-start","team13-modal-favorite-details","team13-modal-contribution","team13-modal-place-actions","team13-modal-place-rate","team13-modal-place-add-image","team13-modal-place-add-comment","team13-modal-emergency-source","team13-modal-emergency-results"].indexOf(overlay.id) !== -1)
                 document.body.classList.remove("team13-favorite-modal-open");
             }
           });

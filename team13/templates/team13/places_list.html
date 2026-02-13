@@ -63,6 +63,17 @@
       .place-card-stars .star-empty {
         color: #e5e7eb;
       }
+      .team13-admin-entry {
+        margin: 12px 0;
+      }
+      .team13-admin-link {
+        background: #1e3a5f;
+        color: #fff;
+      }
+      .team13-admin-link:hover {
+        background: #2d4a7c;
+        color: #fff;
+      }
     </style>
   </head>
   <body>
@@ -70,6 +81,11 @@
       <h1>مکان‌ها (امکانات و نقاط گردشگری)</h1>
       <h3>Facilities & Transportation — گروه Axiom (تیم ۱۳)</h3>
       {% include "team13/_auth_header.html" %} {% include "team13/_nav.html" %}
+      {% if is_team13_admin %}
+      <p class="team13-admin-entry">
+        <a href="{% url 'team13:team13_admin_panel' %}" class="team13-nav-btn team13-admin-link">پنل مدیریت</a>
+      </p>
+      {% endif %}
 
       <form
         method="get"

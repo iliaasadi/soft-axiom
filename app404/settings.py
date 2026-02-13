@@ -70,15 +70,38 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "app404.wsgi.application"
 
+# مطابق فاز ۵ (P5_Axiom): همهٔ دیتابیس‌ها SQLite — کاربران، مکان‌ها، رویدادها، تصاویر، نظرات و غیره در SQLite ذخیره می‌شوند.
+# از env فقط در صورت تمایل به تغییر مسیر فایل SQLite استفاده می‌شود؛ در غیر این صورت مسیر پیش‌فرض اعمال می‌شود.
+def _sqlite_db_path(relative_path):
+    path = BASE_DIR / relative_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return f"sqlite:///{path}"
+
 DATABASES = {
-    "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+    "default": env.db(
+        "DATABASE_URL",
+        default=_sqlite_db_path("db.sqlite3"),
+    ),
 }
+# اطمینان از اینکه default حتماً SQLite باشد (اگر در .env به اشتباه mysql/postgres آمده باشد، نادیده گرفته می‌شود)
+if "sqlite" not in DATABASES["default"]["ENGINE"]:
+    DATABASES["default"] = {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
 
 for t in TEAM_APPS:
     key = f"{t.upper()}_DATABASE_URL"
-
-    default_url = f"sqlite:///{BASE_DIR / t / (t + '.sqlite3')}"
-    DATABASES[t] = env.db(key, default=default_url)
+    default_url = _sqlite_db_path(f"{t}/{t}.sqlite3")
+    db_config = env.db(key, default=default_url)
+    if "sqlite" not in db_config.get("ENGINE", ""):
+        team_db_dir = BASE_DIR / t
+        team_db_dir.mkdir(parents=True, exist_ok=True)
+        db_config = {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": team_db_dir / f"{t}.sqlite3",
+        }
+    DATABASES[t] = db_config
 
 DATABASE_ROUTERS = ["core.db_router.TeamPerAppRouter"]
 
@@ -119,8 +142,12 @@ CORE_BASE_URL = env("CORE_BASE_URL", default="").strip()
 # صفحه ورود برای ریدایرکت در صورت نیاز به احراز هویت (مثلاً امتیازدهی در team13)
 LOGIN_URL = "/auth/"
 
-# کلید API نقشهٔ مپ (Map.ir) برای مسیریابی/ETA — اختیاری؛ در صورت خالی بودن از محاسبهٔ Haversine استفاده می‌شود.
-MAPIR_API_KEY = env("MAPIR_API_KEY", default="").strip() or env("API_KEY", default="").strip()
+# کلیدهای API نشان (neshan.ir) — مسیریابی، جستجو، نقشه
+# service: فراخوانی از بک‌اند (مسیر، reverse، جستجو). web: برای استفاده در فرانت/نقشه در صورت نیاز.
+NESHAN_API_KEY_SERVICE = env("NESHAN_API_KEY_SERVICE", default="").strip()
+NESHAN_API_KEY_WEB = env("NESHAN_API_KEY_WEB", default="").strip()
+# fallback برای سازگاری با یک کلید واحد
+NESHAN_API_KEY = env("NESHAN_API_KEY", default="").strip() or NESHAN_API_KEY_SERVICE or env("API_KEY", default="").strip()
 
 CORS_ALLOW_CREDENTIALS = True
 

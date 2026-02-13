@@ -32,7 +32,13 @@ urlpatterns = [
 ]
 
 
+import importlib.util
 for app in settings.TEAM_APPS:
-    urlpatterns.append(path(f"{app}/", include(f"{app}.urls")))
+    try:
+        spec = importlib.util.find_spec(f"{app}.urls")
+        if spec is not None:
+            urlpatterns.append(path(f"{app}/", include(f"{app}.urls")))
+    except (ModuleNotFoundError, ValueError):
+        pass
 
 

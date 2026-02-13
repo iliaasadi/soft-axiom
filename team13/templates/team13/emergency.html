@@ -38,7 +38,7 @@
                 {% if p.place_id %}
                 <a href="{% url 'team13:place_detail' p.place_id %}">{{ p.name_fa|default:"بیمارستان" }}</a>
                 {% else %}
-                <span>{{ p.name_fa|default:"مرکز امدادی" }}</span> {% if p.source == "mapir" %}<small>(نقشه مپ)</small>{% endif %}
+                <span>{{ p.name_fa|default:"مرکز امدادی" }}</span>
                 {% endif %}
                 <div class="meta">فاصله: {{ p.distance_km }} کیلومتر — زمان رسیدن (تقریبی با خودرو): {{ p.eta_minutes }} دقیقه</div>
                 <div class="meta">{{ p.address|default:"" }}</div>

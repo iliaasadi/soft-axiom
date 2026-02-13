@@ -1,6 +1,5 @@
 event_id,lang,title,description
-b0000001-0001-0001-0001-000000000001,en,Traditional Music Concert,Live performance by Iranian music group at Milad Hall
-b0000001-0001-0001-0001-000000000001,fa,کنسرت موسیقی سنتی,اجرای زنده گروه موسیقی ایرانی در سالن میلاد
-b0000002-0002-0002-0002-000000000002,en,Local Food Festival,Exhibition and sale of traditional Isfahani dishes
-b0000002-0002-0002-0002-000000000002,fa,جشنواره غذاهای محلی,نمایش و فروش غذاهای سنتی اصفهان
-b0000003-0003-0003-0003-000000000003,fa,بازدید از باغ ارم,تور یکروزه باغ تاریخی ارم شیراز
+b0000000-0000-0000-0000-000000000001,fa,نمایشگاه صنایع دستی تهران,نمایش و فروش آثار هنرمندان ایرانی
+b0000000-0000-0000-0000-000000000001,en,Tehran Handicrafts Exhibition,Exhibition and sale of Iranian artists' works
+b0000000-0000-0000-0000-000000000002,fa,کنسرت موسیقی سنتی,اجرای زنده گروه موسیقی
+b0000000-0000-0000-0000-000000000002,en,Traditional Music Concert,Live performance by music group

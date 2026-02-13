@@ -60,7 +60,7 @@
                 <p><strong>مقصد:</strong> {{ route_result.destination_name }}</p>
                 <p><strong>نوع حمل‌ونقل:</strong> {{ route_result.travel_mode }}</p>
                 <p class="distance">فاصله: {{ route_result.distance_km }} کیلومتر</p>
-                <p class="eta">زمان رسیدن: {{ route_result.eta_minutes }} دقیقه {% if route_result.eta_source == "mapir" %}(با نقشهٔ مپ){% else %}(تقریبی){% endif %}</p>
+                <p class="eta">زمان رسیدن: {{ route_result.eta_minutes }} دقیقه {% if route_result.eta_source == "neshan" %}(با نقشهٔ نشان){% else %}(تقریبی){% endif %}</p>
             </div>
 
             <h2>امکانات مبدأ</h2>

@@ -300,6 +300,56 @@ body.team13-map {
   cursor: not-allowed;
   transform: none;
 }
+.team13-rate-stars {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.team13-rate-stars button {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  background: #f9fafb;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.team13-rate-stars button:hover,
+.team13-rate-stars button.team13-rate-selected {
+  background: #fbc02d;
+  border-color: #1b4332;
+  color: #1b4332;
+}
+.team13-reverse-popup-btn-green {
+  background: #40916c !important;
+  color: #fff !important;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+/* پاپ‌آپ اطلاعات مکان روی نقشه (notice) */
+.team13-place-notice { min-width: 220px; max-width: 320px; padding: 4px 0; }
+.team13-place-notice-header { font-size: 1rem; margin-bottom: 4px; color: #1b4332; }
+.team13-place-notice-type { font-size: 0.8rem; color: #40916c; margin-bottom: 4px; }
+.team13-place-notice-rating { font-size: 0.85rem; margin-bottom: 6px; }
+.team13-popup-rating { color: #b45309; }
+.team13-place-notice-address { font-size: 0.8rem; color: #6b7280; margin-bottom: 10px; line-height: 1.3; }
+.team13-place-notice-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.team13-popup-btn-details {
+  background: #1b4332 !important;
+  color: #fff !important;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.team13-popup-btn-details:hover { background: #2d6a4f !important; color: #fff !important; }
+.team13-btn-place-detail-page { text-decoration: none !important; display: inline-block; }
 .team13-contribution-message {
   margin-top: 14px;
   padding: 10px 14px;
@@ -314,6 +364,44 @@ body.team13-map {
 .team13-contribution-message-error {
   background: #fee2e2;
   color: #991b1b;
+}
+/* جزئیات مکان در مودال امتیاز/نظر/عکس */
+.team13-modal-place-details-wrap .team13-modal { max-width: 480px; }
+.team13-place-details-content {
+  margin-bottom: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  max-height: 280px;
+  overflow-y: auto;
+}
+.team13-place-details-loading { color: #6b7280; font-size: 0.9rem; margin: 0; }
+.team13-place-details-error { color: #b91c1c; font-size: 0.9rem; margin: 0; }
+.team13-place-details-body { font-size: 0.9rem; line-height: 1.5; }
+.team13-place-details-body .team13-place-detail-row {
+  margin: 0 0 6px 0;
+  color: #374151;
+}
+.team13-place-details-comments { margin-top: 6px; }
+.team13-place-detail-comment {
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 0.85rem;
+}
+.team13-place-detail-comment:last-child { border-bottom: none; }
+.team13-detail-rating { color: #b45309; margin-left: 6px; }
+.team13-detail-date { color: #6b7280; font-size: 0.8rem; }
+.team13-place-details-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.team13-place-detail-img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #eee;
 }
 .team13-btn-login-modal {
   display: inline-block;
@@ -654,6 +742,46 @@ body.team13-map {
 .team13-home-wrap { padding: 0; }
 .team13-auth { padding: 0; }
 /* Bottom bar: Emergency + Exit, bottom-right, gap 15px, rounded 10px */
+.team13-sidebar-search-results-wrap {
+  flex: 0 0 auto;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+  padding: 10px 12px;
+  max-height: 220px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.team13-sidebar-search-results-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1b4332;
+  margin: 0 0 8px 0;
+}
+.team13-sidebar-search-results {
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
+}
+.team13-sidebar-search-results .team13-search-result-item {
+  padding: 8px 10px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  border: none;
+  border-bottom: 1px solid rgba(27, 67, 50, 0.15);
+  background: #e8f5e9;
+  color: #1b4332;
+  text-align: right;
+  width: 100%;
+}
+.team13-sidebar-search-results .team13-search-result-item:hover {
+  background: #c8e6c9;
+  color: #0d2818;
+}
 .team13-sidebar .team13-sidebar-auth-bottom {
   margin-top: auto !important;
   display: flex !important;
@@ -854,6 +982,20 @@ body.team13-map {
   border-radius: 12px;
   box-shadow: 0 4px 14px rgba(0,0,0,0.15);
 }
+.team13-search-results .team13-search-result-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  font-size: 0.95rem;
+}
+.team13-search-results .team13-search-result-item:hover {
+  background: #f0f7f4;
+}
+.team13-search-results .team13-search-result-city {
+  font-weight: 600;
+  color: #1b4332;
+  background: #f0f7f4;
+}
 
 /* Global z-index: map 1, sidebar 1100, popups & informers 1200+ */
 .team13-map-wrap {
@@ -861,17 +1003,18 @@ body.team13-map {
   inset: 0;
   z-index: 1;
 }
+/* دکمه لایو لوکیشن (موقعیت من روی نقشه) — بالا چپ */
 .team13-btn-center-me {
   position: absolute;
-  bottom: 1.5rem;
+  top: 0.75rem;
   left: 1rem;
   z-index: 1000;
   width: 48px;
   height: 48px;
   border-radius: 50%;
   border: none;
-  background: var(--team13-gold);
-  color: #1b4332;
+  background: #2563eb;
+  color: #fff;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -881,7 +1024,42 @@ body.team13-map {
 }
 .team13-btn-center-me:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 14px rgba(64, 145, 108, 0.4);
+  box-shadow: 0 0 14px rgba(37, 99, 235, 0.5);
+}
+.team13-btn-center-me:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* دکمه نمایش/پنهان آیکون مکان‌ها و رویدادها — زیر دکمه لایو لوکیشن */
+.team13-btn-poi-toggle {
+  position: absolute;
+  top: 3.75rem;
+  left: 1rem;
+  z-index: 1000;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: #0d9488;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.team13-btn-poi-toggle:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 14px rgba(13, 148, 136, 0.5);
+}
+.team13-btn-poi-toggle.team13-btn-poi-toggle-off {
+  background: #64748b;
+  color: rgba(255,255,255,0.9);
+}
+.team13-btn-poi-toggle.team13-btn-poi-toggle-off:hover {
+  box-shadow: 0 0 14px rgba(100, 116, 139, 0.5);
 }
 
 /* Panels wrap & panel visibility — 0.3s ease-in-out fade/slide */
@@ -1650,6 +1828,35 @@ body.team13-map {
   border-color: #9ca3af;
 }
 
+/* مارکرهای سفارشی نشان (مطابق مستندات custom marker) — قابل کلیک برای باز شدن پاپ‌آپ */
+.team13-neshan-marker,
+.team13-neshan-marker-default {
+  box-sizing: border-box;
+  cursor: pointer;
+  pointer-events: auto;
+}
+/* کلیک روی خود مارکر (نه فقط فضای خالی)؛ رویداد به المان مارکر برسد */
+.team13-neshan-marker * {
+  pointer-events: none;
+}
+.team13-neshan-marker img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+/* پاپ‌آپ نقشهٔ نشان/Mapbox: RTL و فونت */
+.team13-map-wrap .mapboxgl-popup {
+  max-width: 280px;
+}
+.team13-map-wrap .mapboxgl-popup-content {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Vazirmatn', Tahoma, sans-serif;
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
 /* Marker popups: spring-in animation */
 @keyframes team13PopupSpringIn {
   from { opacity: 0; transform: scale(0.92) translateY(8px); }
@@ -1658,22 +1865,6 @@ body.team13-map {
 @keyframes team13PathFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
-}
-/* Leaflet popup: RTL, premium container (18px radius, soft shadow) */
-.leaflet-popup-content-wrapper {
-  border-radius: 18px !important;
-  padding: 16px !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  background: #fff;
-  animation: team13PopupSpringIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.leaflet-popup-content {
-  margin: 0 !important;
-  min-width: 140px;
-  direction: rtl !important;
-  text-align: right !important;
-  font-family: 'Vazirmatn', Tahoma, sans-serif;
 }
 /* POI popup: title bold #1a1a1a, 12px gap before action buttons */
 .team13-popup,
@@ -1818,33 +2009,6 @@ body.team13-map {
   background: rgba(211, 47, 47, 0.1);
   color: #b71c1c !important;
 }
-/* Leaflet close button: top-left for RTL (so it doesn't overlap title), circular hover */
-.leaflet-popup-close-button {
-  width: 28px !important;
-  height: 28px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  border-radius: 50% !important;
-  background: transparent !important;
-  color: #666 !important;
-  font: 22px/28px Tahoma, sans-serif !important;
-  top: 6px !important;
-  right: auto !important;
-  left: 6px !important;
-  transition: background 0.2s, color 0.2s;
-}
-.leaflet-popup-close-button:hover {
-  background: #e0e0e0 !important;
-  color: #333 !important;
-}
-/* Popup tip (pointer): match white container, subtle border */
-.leaflet-popup-tip {
-  background: #fff !important;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
 /* Category-specific POI markers: pin shape, white border, soft shadow */
 .team13-poi-pin {
   box-sizing: border-box;
@@ -1853,10 +2017,6 @@ body.team13-map {
 .team13-place-marker.team13-poi-marker .team13-poi-pin,
 .team13-place-marker.team13-discovery-marker .team13-poi-pin {
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
-}
-
-.leaflet-overlay-pane path {
-  animation: team13PathFadeIn 0.4s ease-out;
 }
 
 /* Live location indicator: pulsing blue dot, never block map clicks */
@@ -1919,6 +2079,24 @@ body.team13-map {
   background: rgba(211, 47, 47, 0.95);
   max-width: 320px;
 }
+.team13-emergency-results-modal .team13-modal { max-width: 420px; }
+.team13-emergency-results-list {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+.team13-emergency-result-item {
+  padding: 12px;
+  margin-bottom: 10px;
+  background: #f8f9fa;
+  border-radius: 10px;
+  border-right: 4px solid #40916c;
+}
+.team13-emergency-result-item strong { display: block; margin-bottom: 4px; color: #1b4332; }
+.team13-emergency-type { font-size: 0.85rem; color: #40916c; margin-left: 8px; }
+.team13-emergency-dist { font-size: 0.85rem; color: #6b7280; margin-right: 8px; }
+.team13-emergency-address { font-size: 0.8rem; color: #6b7280; margin: 6px 0 0; line-height: 1.3; }
+.team13-emergency-no-results { padding: 20px; text-align: center; color: #6b7280; }
 @keyframes team13ToastSlideDown {
   from { opacity: 0; transform: translateY(-12px); }
   to { opacity: 1; transform: translateY(0); }
@@ -1958,9 +2136,6 @@ body.team13-map {
   margin: 0.25rem 0;
   font-weight: 500;
 }
-
-/* Leaflet popups: ensure above map layers (within map stacking context) */
-.leaflet-popup-pane { z-index: 1200; }
 
 /* ========== List/Detail pages (place_detail, places_list, routes, events, emergency) ========== */
 /* Scoped so map page (body.team13-map) is not affected */
@@ -2079,6 +2254,18 @@ body:not(.team13-map) .detail-box {
   text-align: right;
 }
 body:not(.team13-map) .detail-box .address { color: var(--text-muted); margin: 10px 0; }
+body:not(.team13-map) .team13-detail-message {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  border-radius: 12px;
+  padding: 14px 20px;
+}
+body:not(.team13-map) .team13-detail-hint {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 12px 0 8px 0;
+}
 body:not(.team13-map) .amenities-list {
   display: flex;
   flex-wrap: wrap;
@@ -2415,4 +2602,12 @@ body.team13-favorite-modal-open #menu-toggle {
     max-width: 100%;
     box-sizing: border-box;
   }
+}
+
+/* تصاویر آپلود کاربر — همه از images_user با lazy loading */
+.team13-img-lazy {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  object-fit: cover;
 }

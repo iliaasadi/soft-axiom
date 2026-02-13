@@ -215,7 +215,7 @@
                 <td class="team13-admin-cell-image">
                   {% if item.images %}
                   {% for url in item.images %}
-                  <img src="{{ url }}" alt="place" />
+                  <img src="{{ url }}" alt="پیشنهاد مکان" loading="lazy" decoding="async" class="team13-img-lazy" />
                   {% endfor %}
                   {% else %}
                   <span style="color: #9ca3af">—</span>
@@ -238,6 +238,143 @@
         </div>
         {% else %}
         <p class="team13-admin-empty">پیشنهاد در انتظار تأییدی وجود ندارد.</p>
+        {% endif %}
+      </div>
+
+      <div class="team13-admin-section">
+        <h2
+          style="
+            font-size: 1.1rem;
+            color: #1b4332;
+            margin: 0 0 16px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+          "
+        >
+          پیشنهادهای مسیر در انتظار تأیید
+        </h2>
+        {% if pending_route_contributions %}
+        <div style="overflow-x: auto">
+          <table class="team13-admin-table">
+            <thead>
+              <tr>
+                <th>مبدأ (آدرس)</th>
+                <th>مقصد (آدرس)</th>
+                <th>نوع مسیر</th>
+                <th>تاریخ</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rc in pending_route_contributions %}
+              <tr>
+                <td title="{{ rc.source_address }}">{{ rc.source_address|truncatewords:12 }}</td>
+                <td title="{{ rc.destination_address }}">{{ rc.destination_address|truncatewords:12 }}</td>
+                <td>{{ rc.get_travel_mode_display }}</td>
+                <td>{{ rc.created_at|date:"Y/m/d H:i" }}</td>
+                <td class="team13-admin-cell-actions">
+                  <form method="post" action="{% url 'team13:team13_admin_reject_route' rc.contribution_id %}" style="display: inline">
+                    {% csrf_token %}
+                    <button type="submit" class="team13-admin-btn-reject" onclick="return confirm('از رد این پیشنهاد مسیر اطمینان دارید؟');">رد</button>
+                  </form>
+                  <form method="post" action="{% url 'team13:team13_admin_approve_route' rc.contribution_id %}" style="display: inline">
+                    {% csrf_token %}
+                    <button type="submit" class="team13-admin-btn-approve">تأیید</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="team13-admin-empty">پیشنهاد مسیر در انتظار تأییدی وجود ندارد.</p>
+        {% endif %}
+      </div>
+
+      <div class="team13-admin-section">
+        <h2 style="font-size: 1.1rem; color: #1b4332; margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;">
+          نظرات در انتظار تأیید
+        </h2>
+        <p style="color: #6b7280; margin-bottom: 12px; font-size: 0.875rem;">نظرات ارسالی کاربران پس از تأیید در صفحهٔ جزئیات مکان برای همه نمایش داده می‌شوند.</p>
+        {% if pending_comments %}
+        <div style="overflow-x: auto">
+          <table class="team13-admin-table">
+            <thead>
+              <tr>
+                <th>مکان</th>
+                <th>متن نظر</th>
+                <th>امتیاز</th>
+                <th>تاریخ</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in pending_comments %}
+              <tr>
+                <td>{{ item.place_name }}</td>
+                <td>{{ item.comment.body|truncatewords:25|default:"—" }}</td>
+                <td>{% if item.comment.rating %}{{ item.comment.rating }}/5{% else %}—{% endif %}</td>
+                <td>{{ item.comment.created_at|date:"Y/m/d H:i" }}</td>
+                <td class="team13-admin-cell-actions">
+                  <form method="post" action="{% url 'team13:team13_admin_reject_comment' item.comment.comment_id %}" style="display: inline">
+                    {% csrf_token %}
+                    <button type="submit" class="team13-admin-btn-reject" onclick="return confirm('از رد و حذف این نظر اطمینان دارید؟');">رد</button>
+                  </form>
+                  <form method="post" action="{% url 'team13:team13_admin_approve_comment' item.comment.comment_id %}" style="display: inline">
+                    {% csrf_token %}
+                    <button type="submit" class="team13-admin-btn-approve">تأیید (عمومی شود)</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="team13-admin-empty">نظر در انتظار تأییدی وجود ندارد.</p>
+        {% endif %}
+      </div>
+
+      <div class="team13-admin-section">
+        <h2 style="font-size: 1.1rem; color: #1b4332; margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;">
+          تصاویر در انتظار تأیید
+        </h2>
+        <p style="color: #6b7280; margin-bottom: 12px; font-size: 0.875rem;">تصاویر ارسالی کاربران پس از تأیید در صفحهٔ جزئیات مکان برای همه نمایش داده می‌شوند.</p>
+        {% if pending_images %}
+        <div style="overflow-x: auto">
+          <table class="team13-admin-table">
+            <thead>
+              <tr>
+                <th>مکان</th>
+                <th class="team13-admin-cell-image">پیش‌نمایش</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in pending_images %}
+              <tr>
+                <td>{{ item.place_name }}</td>
+                <td class="team13-admin-cell-image">
+                  <img src="{{ item.image.image_url }}" alt="تصویر در انتظار تأیید" loading="lazy" style="max-width: 80px; max-height: 60px; object-fit: cover; border-radius: 8px;" />
+                </td>
+                <td class="team13-admin-cell-actions">
+                  <form method="post" action="{% url 'team13:team13_admin_reject_image' item.image.image_id %}" style="display: inline">
+                    {% csrf_token %}
+                    <button type="submit" class="team13-admin-btn-reject" onclick="return confirm('از رد و حذف این تصویر اطمینان دارید؟');">رد</button>
+                  </form>
+                  <form method="post" action="{% url 'team13:team13_admin_approve_image' item.image.image_id %}" style="display: inline">
+                    {% csrf_token %}
+                    <button type="submit" class="team13-admin-btn-approve">تأیید (عمومی شود)</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="team13-admin-empty">تصویر در انتظار تأییدی وجود ندارد.</p>
         {% endif %}
       </div>
 

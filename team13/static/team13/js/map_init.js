@@ -1,15 +1,9 @@
 /**
- * Team 13 — Standard Leaflet map (OpenStreetMap tiles).
- * Map.ir API config kept globally for routing/ETA services.
- * showActionMenu(lat, lng, title): popup with "برو اینجا" (route) and "فاصله و زمان" (ETA toast).
+ * Team 13 — راه‌اندازی نقشهٔ نشان و دکمه‌های مسیر/خانه/پاک‌کردن.
+ * نقشه توسط neshan_map.js ساخته می‌شود؛ این فایل فقط setView و رویدادها را متصل می‌کند.
  */
 (function () {
-  var MAPIR_API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjUxNDFhMWMzNmMzYWEwYjRkMTAzODNjNmRmYTNlNGIwNzc4NzY3ZDUyNzZmYTdhNjY0NDIxMzM0YTZkZmU0ZWZjNmIyOTRlODZmZDc4NWNmIn0.eyJhdWQiOiIzNzAxNCIsImp0aSI6IjUxNDFhMWMzNmMzYWEwYjRkMTAzODNjNmRmYTNlNGIwNzc4NzY3ZDUyNzZmYTdhNjY0NDIxMzM0YTZkZmU0ZWZjNmIyOTRlODZmZDc4NWNmIiwiaWF0IjoxNzcwODM5NzU3LCJuYmYiOjE3NzA4Mzk3NTcsImV4cCI6MTc3MzM0NTM1Nywic3ViIjoiIiwic2NvcGVzIjpbImJhc2ljIl19.mXTXTDqNxPmHaQ6Mgl5Kj5VWDJUiMN2c_zX7TSGERlocEg2Do1_IDLo537e5rN2LzYQXDuNkOSagRE_bbwTdWU6ZD6lT0amYhht00if0-rOe7W6V3_Y4-PiT-HAZQoZtm9G8jvClV21VttLfsv27VAHdQ_Q1Q7xWR5gV-XjNVSgDVQi4tphHTBSBYl-AwOQYnk-lYdGKc9QUXy9e9TOrx7yDUhccv8C21kIex0f3mhbVnVzMXZsl-TbQ1djIH6qVs8KVg_lEweI2sDZx7_R2GeeXccPU3tEXAgjSQy_ZK6hRDRTZ-OcgzRyRPuNAAjIiIP1jufCZ4IY7lkL_OddCpw';
-
-  window.MAPIR_CONFIG = {
-    apiKey: MAPIR_API_KEY,
-    routingUrl: 'https://map.ir/routes/route/v1/driving/'
-  };
+  window.MAPIR_CONFIG = { apiKey: '', routingUrl: '' };
 
   function escapeHtml(s) {
     if (!s) return '';
@@ -84,8 +78,7 @@
   }
 
   /**
-   * Open a Leaflet popup at (lat, lng) with location name and actions:
-   * مسیریابی سواره (driving), مسیریابی پیاده (walking), دوچرخه (bicycle), حمل‌ونقل عمومی (transit).
+   * نمایش پاپ‌آپ اکشن در (lat, lng): مسیریابی سواره، پیاده، دوچرخه، حمل‌ونقل عمومی.
    */
   function showActionMenu(lat, lng, title) {
     var map = window.team13MapInstance;
@@ -114,9 +107,9 @@
     });
 
     function runRoute(serviceType) {
-      if (!window.Team13Api || typeof window.Team13Api.getMapirRoute !== 'function') return;
+      if (!window.Team13Api || typeof window.Team13Api.getRouteFromUserToPoint !== 'function') return;
       if (etaPlaceholder) etaPlaceholder.textContent = 'در حال بارگذاری...';
-      window.Team13Api.getMapirRoute({ lat: lat, lng: lng }, serviceType)
+      window.Team13Api.getRouteFromUserToPoint({ lat: lat, lng: lng }, serviceType)
         .then(function (r) {
           if (etaPlaceholder && r && (r.durationMinutes != null || r.distanceKm != null)) {
             var timeStr = r.durationMinutes != null ? (toPersianNum(r.durationMinutes) + ' دقیقه') : '—';
@@ -159,20 +152,12 @@
 
   function initMap() {
     if (typeof L === 'undefined') return;
-    var map = L.map('map-container').setView([35.7219, 51.3347], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-    try {
-      var routePane = map.createPane('team13-route-pane');
-      if (routePane) routePane.style.zIndex = '1000';
-    } catch (e) {}
+    var map = window.team13MapInstance;
+    if (!map) return;
+    map.setView([35.7219, 51.3347], 12);
     setTimeout(function () {
-      if (map && typeof map.invalidateSize === 'function') {
-        map.invalidateSize();
-      }
+      if (map && typeof map.invalidateSize === 'function') map.invalidateSize();
     }, 500);
-    if (typeof window !== 'undefined') window.team13MapInstance = map;
   }
 
   function initClearPathButton() {

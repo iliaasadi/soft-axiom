@@ -1,31 +1,23 @@
 /**
- * Team 13 — Map.ir autocomplete for static Routes (ETA) page.
- * Binds search inputs for مبدا and مقصد; on selection stores name + lat/lng in hidden fields.
+ * Team 13 — صفحهٔ مسیریابی (مبدأ/مقصد). جستجوی آدرس از طریق بک‌اند (نشان).
  */
 (function () {
-  var MAPIR_AUTOCOMPLETE = 'https://map.ir/search/v2/autocomplete';
+  var base = (window.TEAM13_API_BASE || '/team13').replace(/\/$/, '');
+  var NESHAN_SEARCH_URL = base + '/neshan-search/';
 
-  function getConfig() {
-    return window.MAPIR_CONFIG || {};
-  }
-
-  function mapirAutocomplete(text) {
-    var config = getConfig();
-    if (!config.apiKey) return Promise.resolve([]);
-    var url = MAPIR_AUTOCOMPLETE + '?text=' + encodeURIComponent(text);
-    return fetch(url, { method: 'GET', headers: { 'x-api-key': config.apiKey, Accept: 'application/json' } })
+  function neshanAutocomplete(text) {
+    if (!(text && text.trim())) return Promise.resolve([]);
+    var url = NESHAN_SEARCH_URL + '?q=' + encodeURIComponent(text.trim()) + '&limit=10';
+    return fetch(url, { method: 'GET', headers: { Accept: 'application/json' }, credentials: 'same-origin' })
       .then(function (res) { return res.json(); })
-      .then(function (data) {
-        var value = data.value != null ? data.value : data;
-        if (!Array.isArray(value)) return [];
-        return value.slice(0, 8);
-      })
+      .then(function (data) { return (data && data.items) ? data.items : []; })
       .catch(function () { return []; });
   }
 
   function getItemLatLng(item) {
+    if (item.lat != null && item.lng != null) return { lat: parseFloat(item.lat), lng: parseFloat(item.lng) };
     if (item.y != null && item.x != null) return { lat: parseFloat(item.y), lng: parseFloat(item.x) };
-    if (item.lat != null && item.lon != null) return { lat: parseFloat(item.lat), lng: parseFloat(item.lon) };
+    if (item.y != null && item.x != null) return { lat: parseFloat(item.y), lng: parseFloat(item.x) };
     if (item.latitude != null && item.longitude != null) return { lat: parseFloat(item.latitude), lng: parseFloat(item.longitude) };
     var geom = item.geom || item.geometry;
     if (geom && geom.coordinates && Array.isArray(geom.coordinates) && geom.coordinates.length >= 2)
@@ -41,7 +33,7 @@
       var q = (inputEl.value || '').trim();
       if (q.length < 2) { resultsEl.hidden = true; resultsEl.innerHTML = ''; return; }
       debounce = setTimeout(function () {
-        mapirAutocomplete(q).then(function (items) {
+        neshanAutocomplete(q).then(function (items) {
           resultsEl.innerHTML = '';
           items.forEach(function (item) {
             var title = (item.title || item.address || item.name || item.text || '').trim();
@@ -73,8 +65,6 @@
   }
 
   function init() {
-    var config = getConfig();
-    if (!config.apiKey) return;
 
     var sourceInput = document.getElementById('routes_source_search');
     var sourceResults = document.getElementById('routes_source_results');

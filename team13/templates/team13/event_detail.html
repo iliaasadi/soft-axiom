@@ -56,7 +56,7 @@
         <div class="detail-box">
             <h2>تصاویر</h2>
             {% for url in detail.images %}
-            <img src="{{ url }}" alt="" style="max-width: 200px; height: auto; margin: 8px; border-radius: 8px;" />
+            <img src="{{ url }}" alt="تصویر رویداد" loading="lazy" decoding="async" class="team13-img-lazy" style="max-width: 200px; height: auto; margin: 8px; border-radius: 8px;" />
             {% endfor %}
         </div>
         {% endif %}

@@ -3,7 +3,8 @@
  * Appends format=json to all requests. CSRF helper for POST (rating).
  */
 
-const API_BASE = window.TEAM13_API_BASE || '';
+/** مسیر پایهٔ API تیم ۱۳ — همیشه به صورت مطلق مثلاً /team13 تا درخواست‌ها به بک‌اند درست بروند */
+const API_BASE = (window.TEAM13_API_BASE || '/team13').replace(/\/$/, '');
 
 /**
  * Get CSRF token from cookie (Django's csrftoken cookie).
@@ -27,12 +28,13 @@ function getCsrfToken() {
 
 /**
  * Fetch JSON from a team13 endpoint. Automatically appends format=json.
- * @param {string} endpoint - Path without base, e.g. '/team13/places/' or 'places/'
+ * @param {string} endpoint - Path relative to API_BASE, e.g. 'places/' or 'routes/'
  * @param {Record<string, string>} [params] - Optional query params (merged with format=json)
  * @returns {Promise<object>} Parsed JSON
  */
 async function fetchData(endpoint, params = {}) {
-  const url = new URL(endpoint.startsWith('http') ? endpoint : API_BASE + endpoint.replace(/^\//, ''), window.location.origin);
+  const path = endpoint.startsWith('http') ? endpoint : API_BASE + '/' + (endpoint || '').replace(/^\//, '');
+  const url = new URL(path, window.location.origin);
   const query = { format: 'json', ...params };
   Object.keys(query).forEach(key => {
     if (query[key] != null && query[key] !== '') url.searchParams.set(key, query[key]);
@@ -48,7 +50,7 @@ async function fetchData(endpoint, params = {}) {
 
 /**
  * POST for rating (place or event). Sends CSRF via header and form body.
- * @param {string} url - Full URL, e.g. /team13/places/<uuid>/rate/
+ * @param {string} url - Path relative to API_BASE, e.g. places/<uuid>/rate/
  * @param {{ rating: number }} data - e.g. { rating: 5 }
  * @returns {Promise<Response>}
  */
@@ -56,7 +58,7 @@ async function postRating(url, data) {
   const csrf = getCsrfToken();
   const body = new URLSearchParams(data);
   if (csrf) body.append('csrfmiddlewaretoken', csrf);
-  const fullUrl = url.startsWith('http') ? url : (API_BASE ? API_BASE.replace(/\/$/, '') + url : url);
+  const fullUrl = url.startsWith('http') ? url : API_BASE + '/' + (url || '').replace(/^\//, '');
   return fetch(fullUrl, {
     method: 'POST',
     headers: {
@@ -69,22 +71,135 @@ async function postRating(url, data) {
   });
 }
 
-// Convenience API names aligned with backend
+/**
+ * POST JSON to an endpoint (e.g. map-matching). Sends CSRF via header.
+ */
+async function postJson(endpoint, data) {
+  const csrf = getCsrfToken();
+  const fullUrl = endpoint.startsWith('http') ? endpoint : API_BASE + '/' + (endpoint || '').replace(/^\//, '');
+  const res = await fetch(fullUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrf || '',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify(data),
+    credentials: 'same-origin',
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + res.statusText);
+  return res.json();
+}
+
+// Convenience API names — مسیرها نسبی به API_BASE (مثلاً /team13)
 const api = {
-  places: (params) => fetchData('/team13/places/', params),
-  placeDetail: (placeId) => fetchData(`/team13/places/${placeId}/`),
-  placeRate: (placeId, rating) => postRating(`/team13/places/${placeId}/rate/`, { rating }),
-  events: () => fetchData('/team13/events/'),
-  eventDetail: (eventId) => fetchData(`/team13/events/${eventId}/`),
-  eventRate: (eventId, rating) => postRating(`/team13/events/${eventId}/rate/`, { rating }),
-  routes: (sourcePlaceId, destinationPlaceId, travelMode = 'car') =>
-    fetchData('/team13/routes/', {
+  places: (params) => fetchData('places/', params),
+  placeDetail: (placeId) => fetchData(`places/${placeId}/`),
+  placeRate: (placeId, rating) => postRating(`places/${placeId}/rate/`, { rating }),
+  events: (params) => fetchData('events/', params || {}),
+  eventDetail: (eventId) => fetchData(`events/${eventId}/`),
+  eventRate: (eventId, rating) => postRating(`events/${eventId}/rate/`, { rating }),
+  routes: (sourcePlaceId, destinationPlaceId, travelMode = 'car', options = {}) => {
+    const params = {
       source_place_id: sourcePlaceId,
       destination_place_id: destinationPlaceId,
       travel_mode: travelMode,
-    }),
-  emergency: (lat, lon, limit = 10) =>
-    fetchData('/team13/emergency/', { lat: String(lat), lon: String(lon), limit: String(limit) }),
+    };
+    if (options.no_traffic) params.no_traffic = '1';
+    if (options.bearing != null && options.bearing >= 0 && options.bearing <= 360) params.bearing = String(options.bearing);
+    if (options.avoid_traffic_zone) params.avoid_traffic_zone = '1';
+    if (options.avoid_odd_even_zone) params.avoid_odd_even_zone = '1';
+    if (options.alternative) params.alternative = '1';
+    return fetchData('routes/', params);
+  },
+  emergency: (lat, lon, limit = 50, radiusKm = 10) => {
+    const params = { lat: String(lat), lon: String(lon), limit: String(limit), radius_km: String(radiusKm) };
+    return fetchData('emergency/', params);
+  },
+  tsp: (waypoints, options = {}) => {
+    const params = {};
+    if (Array.isArray(waypoints) && waypoints.length >= 2) {
+      params.waypoints = waypoints.map(w => (Array.isArray(w) ? w[0] + ',' + w[1] : (w.lat + ',' + w.lng))).join('|');
+    } else if (typeof waypoints === 'string' && waypoints.indexOf('|') !== -1) {
+      params.waypoints = waypoints;
+    } else {
+      return Promise.reject(new Error('waypoints باید آرایه‌ای از حداقل دو نقطه [lat,lng] یا رشتهٔ lat,lng|lat,lng باشد'));
+    }
+    if (options.round_trip !== undefined) params.round_trip = options.round_trip ? '1' : '0';
+    if (options.source_is_any_point !== undefined) params.source_is_any_point = options.source_is_any_point ? '1' : '0';
+    if (options.last_is_any_point !== undefined) params.last_is_any_point = options.last_is_any_point ? '1' : '0';
+    return fetchData('tsp/', params);
+  },
+  distanceMatrix: (origins, destinations, options = {}) => {
+    const toStr = (points) => {
+      if (typeof points === 'string') return points;
+      if (Array.isArray(points) && points.length > 0) {
+        return points.map(p => (Array.isArray(p) ? p[0] + ',' + p[1] : (p.lat + ',' + p.lng))).join('|');
+      }
+      return '';
+    };
+    const o = toStr(origins);
+    const d = toStr(destinations);
+    if (!o || !d) return Promise.reject(new Error('origins و destinations الزامی هستند (آرایه یا رشتهٔ lat,lng|...)'));
+    const params = { origins: o, destinations: d };
+    if (options.type === 'motorcycle') params.type = 'motorcycle';
+    if (options.no_traffic) params.no_traffic = '1';
+    return fetchData('distance-matrix/', params);
+  },
+  isochrone: (lat, lng, options = {}) => {
+    const params = { lat: String(lat), lng: String(lng) };
+    if (options.distance_km != null) params.distance = String(options.distance_km);
+    if (options.time_minutes != null) params.time = String(options.time_minutes);
+    if (options.polygon) params.polygon = '1';
+    if (options.denoise != null && options.denoise >= 0 && options.denoise <= 1) params.denoise = String(options.denoise);
+    if (params.distance === undefined && params.time === undefined) return Promise.reject(new Error('حداقل distance_km یا time_minutes الزامی است'));
+    return fetchData('isochrone/', params);
+  },
+  search: (term, options = {}) => {
+    const params = { q: String(term || '').trim() };
+    if (params.q === '') return Promise.resolve({ count: 0, items: [] });
+    if (options.lat != null && options.lng != null) { params.lat = String(options.lat); params.lng = String(options.lng); }
+    if (options.limit != null) params.limit = String(Math.min(30, Math.max(1, Number(options.limit))));
+    return fetchData('neshan-search/', params);
+  },
+  /**
+   * تبدیل آدرس متنی به مختصات (Geocoding) نشان.
+   * @param {string} address - آدرس مورد نظر
+   * @param {{ province?: string, city?: string, lat?: number, lng?: number, plus?: boolean, extent?: { southWest: {latitude,longitude}, northEast: {latitude,longitude} } }} [options]
+   * @returns {Promise<{ items: Array<{ location: { latitude, longitude }, province, city, neighbourhood, unMatchedTerm }> }>}
+   */
+  geocode: (address, options = {}) => {
+    const params = { address: String(address || '').trim() };
+    if (params.address === '') return Promise.resolve({ items: [] });
+    if (options.province) params.province = String(options.province);
+    if (options.city) params.city = String(options.city);
+    if (options.lat != null && options.lng != null) {
+      params.lat = String(options.lat);
+      params.lng = String(options.lng);
+    }
+    if (options.plus) params.plus = '1';
+    if (options.extent && options.extent.southWest && options.extent.northEast) {
+      const sw = options.extent.southWest;
+      const ne = options.extent.northEast;
+      params.sw_lat = String(sw.latitude);
+      params.sw_lng = String(sw.longitude);
+      params.ne_lat = String(ne.latitude);
+      params.ne_lng = String(ne.longitude);
+    }
+    return fetchData('geocode/', params);
+  },
+  mapMatching: (path) => {
+    let pathStr;
+    if (typeof path === 'string') {
+      pathStr = path.trim();
+      if (pathStr.indexOf('|') === -1) return Promise.reject(new Error('path باید حداقل دو نقطه به صورت lat,lng|lat,lng داشته باشد'));
+    } else if (Array.isArray(path) && path.length >= 2) {
+      pathStr = path.map(p => (Array.isArray(p) ? p[0] + ',' + p[1] : (p.lat + ',' + p.lng))).join('|');
+    } else {
+      return Promise.reject(new Error('path باید رشتهٔ lat,lng|... یا آرایهٔ حداقل دو نقطه باشد'));
+    }
+    return postJson('map-matching/', { path: pathStr });
+  },
 };
 
 /**
@@ -93,10 +208,10 @@ const api = {
  * @returns {Promise<{ places: Array, events: Array }>}
  */
 async function loadMapData() {
-  const base = window.location.origin + (window.TEAM13_API_BASE || '');
+  const baseUrl = window.location.origin + (API_BASE || '/team13');
   const [placesRes, eventsRes] = await Promise.all([
-    fetch(`${base}/team13/places/?format=json`, { method: 'GET', headers: { Accept: 'application/json' }, credentials: 'same-origin' }),
-    fetch(`${base}/team13/events/?format=json`, { method: 'GET', headers: { Accept: 'application/json' }, credentials: 'same-origin' }),
+    fetch(`${baseUrl}/places/?format=json`, { method: 'GET', headers: { Accept: 'application/json' }, credentials: 'same-origin' }),
+    fetch(`${baseUrl}/events/?format=json`, { method: 'GET', headers: { Accept: 'application/json' }, credentials: 'same-origin' }),
   ]);
   if (!placesRes.ok) throw new Error('Places fetch failed: ' + placesRes.status);
   if (!eventsRes.ok) throw new Error('Events fetch failed: ' + eventsRes.status);
@@ -108,402 +223,122 @@ async function loadMapData() {
   };
 }
 
-const COLOR_DRIVING = '#1b4332';
-const COLOR_WALKING = '#40916c';
-const COLOR_BICYCLE = '#2d6a4f';
-const COLOR_TRANSIT = '#1b4332';
-const MAPIR_ROUTES_BASE = 'https://map.ir/routes';
-const MAPIR_SEARCH_POI = 'https://map.ir/search/v2/poi';
-const MAPIR_REVERSE = 'https://map.ir/reverse';
-
 /**
- * Map.ir Routing API reference (مستندات مسیریابی مپ):
- * - Service: https://help.map.ir/route-api/
- * - Endpoints (base MAPIR_ROUTES_BASE):
- *   - Car: route/v1/driving/{coordinates}
- *   - Foot: foot/v1/driving/{coordinates}
- *   - Bicycle: bicycle/v1/driving/{coordinates}
- *   - Traffic/zojofard: tarh/v1/driving, zojofard/v1/driving
- * - Input: coordinates = "lon,lat;lon,lat" (path), x-api-key (header), steps=true, alternatives=false, geometries=polyline|polyline6|geojson
- * - Output: routes[].distance (m), routes[].duration (s), routes[].legs[].steps (maneuver locations), routes[].geometry (encoded polyline if requested)
- * - Web SDK examples: draw-route-api, advanced-routing, color-route
+ * مسیریابی و ETA از بک‌اند (Haversine). خط مسیر فعلاً مستقیم (مبدأ–مقصد)؛ بعداً با API جدید جایگزین می‌شود.
  */
-
-/**
- * Decode route geometry from Map.ir response using polyline.js.
- * 1. Prefer data.routes[0].geometry (compressed string) → polyline.decode(geometry) with precision 5 or 6.
- * 2. Fallback: geometry.coordinates or legs/steps polyline arrays.
- * @returns {Array<[number, number]>} [[lat, lng], ...]
- */
-function decodeRouteGeometry(data, oLat, oLng, destLat, destLng) {
-  const route = data.route || (data.routes && data.routes[0]);
-  if (!route) return [[oLat, oLng], [destLat, destLng]];
-
-  const geom = route.geometry;
-  if (typeof geom === 'string') {
-    if (typeof polyline !== 'undefined' && polyline.decode) {
-      try {
-        const decoded = polyline.decode(geom, 5);
-        if (decoded && decoded.length >= 2) return decoded;
-      } catch (e) {}
-      try {
-        const decoded = polyline.decode(geom, 6);
-        if (decoded && decoded.length >= 2) return decoded;
-      } catch (e) {}
-      return polyline.decode(geom);
-    }
-  }
-  if (geom && Array.isArray(geom.coordinates)) {
-    return geom.coordinates.map((c) => (Array.isArray(c) ? [c[1], c[0]] : [c.lat ?? c[1], c.lng ?? c[0]]));
-  }
-
-  const latlngs = [];
-  if (route.legs && Array.isArray(route.legs)) {
-    route.legs.forEach((leg) => {
-      if (leg.steps && Array.isArray(leg.steps)) {
-        leg.steps.forEach((step) => {
-          if (step.polyline && Array.isArray(step.polyline)) {
-            step.polyline.forEach((c) => {
-              if (Array.isArray(c) && c.length >= 2) latlngs.push([c[1], c[0]]);
-            });
-          }
-        });
-      }
-    });
-  }
-  if (latlngs.length >= 2) return latlngs;
-  if (data.waypoints && Array.isArray(data.waypoints)) {
-    data.waypoints.forEach((p) => {
-      if (Array.isArray(p)) latlngs.push([p[1], p[0]]);
-      else if (p && typeof p.lat !== 'undefined') latlngs.push([p.lat, p.lng]);
-    });
-  }
-  if (latlngs.length >= 2) return latlngs;
-  return [[oLat, oLng], [destLat, destLng]];
-}
-
-function parseRouteDistance(data) {
-  const route = data.route || (data.routes && data.routes[0]);
-  if (route && typeof route.distance === 'number') return route.distance / 1000;
-  if (route && route.legs && route.legs.length) {
-    let d = 0;
-    route.legs.forEach((leg) => { d += leg.distance || 0; });
-    return d / 1000;
-  }
-  return null;
-}
-
-/**
- * Pull duration (seconds) from the specific route object returned by Map.ir.
- * Checks route.duration, then sum of route.legs[].duration.
- */
-function parseRouteDuration(data) {
-  const route = data.route || (data.routes && data.routes[0]);
-  if (!route) return null;
-  if (typeof route.duration === 'number') return route.duration;
-  if (route.legs && route.legs.length) {
-    let d = 0;
-    route.legs.forEach((leg) => { d += leg.duration || 0; });
-    return d;
-  }
-  return null;
-}
-
-/** Walking speed for fallback ETA when API does not return walking duration: ~5 km/h */
-const WALKING_SPEED_KMH = 5;
-
-/** Safety cap: max points for interpolated route to avoid browser crash on very long routes (e.g. >500km). */
-const MAX_ROUTE_POINTS = 50000;
-
-/** Max points for rendered polyline to prevent fragmentation on long routes; single LineString. */
-const MAX_RENDER_POINTS = 2500;
-
-/**
- * Simplify path for rendering: keep first/last and sample so length <= maxPoints. Single continuous line.
- * @param {Array<[number, number]>} points - [lat, lng]
- * @param {number} maxPoints
- * @returns {Array<[number, number]>}
- */
-function simplifyPathForRender(points, maxPoints = MAX_RENDER_POINTS) {
-  if (!points || points.length <= maxPoints) return points || [];
-  const out = [points[0]];
-  const step = (points.length - 1) / (maxPoints - 1);
-  for (let i = 1; i < maxPoints - 1; i++) {
-    const idx = Math.round(i * step);
-    if (idx > 0 && idx < points.length) out.push(points[idx]);
-  }
-  out.push(points[points.length - 1]);
-  return out;
-}
-
-/**
- * Haversine distance between two [lat, lng] points in meters.
- * @param {number} lat1
- * @param {number} lng1
- * @param {number} lat2
- * @param {number} lng2
- * @returns {number}
- */
-function haversineDistanceMeters(lat1, lng1, lat2, lng2) {
-  const R = 6371000;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-/**
- * Linear interpolation (LERP): break segments longer than maxDistanceInMeters into sub-segments with "ghost points"
- * so the line hugs the road at ultra-high resolution. Safety cap at MAX_ROUTE_POINTS to avoid crash on very long routes.
- * @param {Array<[number, number]>} points - [lat, lng] pairs from the route
- * @param {number} maxDistanceInMeters - max length of each micro-segment (default 2 meters)
- * @returns {Array<[number, number]>}
- */
-function interpolatePoints(points, maxDistanceInMeters = 2) {
-  if (!points || points.length < 2 || maxDistanceInMeters <= 0) return points;
-  const out = [points[0]];
-  for (let i = 0; i < points.length - 1; i++) {
-    if (out.length >= MAX_ROUTE_POINTS) break;
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    const lat1 = p1[0];
-    const lng1 = p1[1];
-    const lat2 = p2[0];
-    const lng2 = p2[1];
-    const distM = haversineDistanceMeters(lat1, lng1, lat2, lng2);
-    if (distM <= maxDistanceInMeters) {
-      out.push(p2);
-      continue;
-    }
-    const steps = Math.ceil(distM / maxDistanceInMeters);
-    const remaining = MAX_ROUTE_POINTS - out.length - 1;
-    const stepsToAdd = Math.min(steps - 1, Math.max(0, remaining));
-    for (let k = 1; k <= stepsToAdd; k++) {
-      const t = k / steps;
-      out.push([lat1 + (lat2 - lat1) * t, lng1 + (lng2 - lng1) * t]);
-    }
-    out.push(p2);
-  }
-  return out;
-}
-
-/**
- * Normalize a coordinate to [lat, lng]. Input may be [lon, lat], {lat, lng}, {lat, lon}, etc.
- * @returns {[number, number]|null}
- */
-function normCoord(c) {
-  if (!c) return null;
-  let lat, lng;
-  if (Array.isArray(c) && c.length >= 2) {
-    lng = parseFloat(c[0]);
-    lat = parseFloat(c[1]);
-  } else if (typeof c === 'object') {
-    lat = parseFloat(c.lat != null ? c.lat : c[1]);
-    lng = parseFloat(c.lon != null ? c.lon : c.lng != null ? c.lng : c[0]);
-  } else return null;
-  if (isNaN(lat) || isNaN(lng)) return null;
-  return [lat, lng];
-}
-
-/**
- * Merge multiple path segments into one continuous array. Removes duplicate consecutive points.
- * @param {Array<Array<[number, number]>>} segments - Arrays of [lat, lng] pairs
- * @returns {Array<[number, number]>}
- */
-function mergeRouteSegments(segments) {
-  if (!segments || segments.length === 0) return [];
-  const out = [];
-  for (let s = 0; s < segments.length; s++) {
-    const seg = segments[s];
-    if (!Array.isArray(seg) || seg.length === 0) continue;
-    for (let i = 0; i < seg.length; i++) {
-      const p = Array.isArray(seg[i]) && seg[i].length >= 2 ? [Number(seg[i][0]), Number(seg[i][1])] : null;
-      if (p && (out.length === 0 || out[out.length - 1][0] !== p[0] || out[out.length - 1][1] !== p[1])) out.push(p);
-    }
-  }
-  return out;
-}
-
-/**
- * Decode a single geometry string (encoded polyline) with precision 5, 6, or default.
- * @returns {Array<[number, number]>|null}
- */
-function decodePolylineString(geom) {
-  if (typeof geom !== 'string' || typeof polyline === 'undefined' || !polyline.decode) return null;
-  try {
-    let path = polyline.decode(geom, 6);
-    if (path && path.length >= 2) return path;
-  } catch (e) {}
-  try {
-    path = polyline.decode(geom, 5);
-    if (path && path.length >= 2) return path;
-  } catch (e2) {}
-  try {
-    path = polyline.decode(geom);
-    if (path && path.length >= 2) return path;
-  } catch (e3) {}
-  return null;
-}
-
-/**
- * Build path from route.legs[].steps[].geometry (encoded) or step.polyline / coordinates.
- * @param {object} route - data.routes[0]
- * @returns {Array<[number, number]>}
- */
-function pathFromLegsAndSteps(route, startLat, startLng, destLat, destLng) {
-  const segments = [];
-  if (route && route.legs && Array.isArray(route.legs)) {
-    route.legs.forEach((leg) => {
-      if (leg.steps && Array.isArray(leg.steps)) {
-        leg.steps.forEach((step) => {
-          if (step.geometry && typeof step.geometry === 'string') {
-            const decoded = decodePolylineString(step.geometry);
-            if (decoded && decoded.length > 0) segments.push(decoded);
-          } else if (step.geometry && Array.isArray(step.geometry.coordinates)) {
-            const coords = step.geometry.coordinates.map((c) => (Array.isArray(c) ? [c[1], c[0]] : [c.lat ?? c[1], c.lng ?? c[0]]));
-            if (coords.length > 0) segments.push(coords);
-          } else if (step.polyline && Array.isArray(step.polyline)) {
-            const pts = step.polyline.map((c) => (Array.isArray(c) && c.length >= 2 ? [Number(c[1]), Number(c[0])] : null)).filter(Boolean);
-            if (pts.length > 0) segments.push(pts);
-          }
-        });
-      }
-    });
-  }
-  const merged = mergeRouteSegments(segments);
-  if (merged.length >= 2) return merged;
-  return [[startLat, startLng], [destLat, destLng]];
-}
-
-/**
- * Full geometry decoding: route.geometry (encoded) with precision 6/5, then legs/steps merge.
- * Ensures a single continuous line for long-distance routes.
- * @param {object} route - data.routes[0]
- * @param {number} startLat
- * @param {number} startLng
- * @param {number} destLat
- * @param {number} destLng
- * @returns {Array<[number, number]>}
- */
-function decodeRouteGeometryOnly(route, startLat, startLng, destLat, destLng) {
-  const routeGeom = route && route.geometry;
-  if (typeof routeGeom === 'string') {
-    const fullPath = decodePolylineString(routeGeom);
-    if (fullPath && fullPath.length >= 2) return fullPath;
-  }
-  if (routeGeom && Array.isArray(routeGeom.coordinates)) {
-    const coords = routeGeom.coordinates.map((c) => (Array.isArray(c) ? [c[1], c[0]] : [c.lat ?? c[1], c.lng ?? c[0]]));
-    if (coords.length >= 2) return coords;
-  }
-  const fromLegs = pathFromLegsAndSteps(route, startLat, startLng, destLat, destLng);
-  if (fromLegs.length >= 2) return fromLegs;
-  return [[startLat, startLng], [destLat, destLng]];
-}
-
-/**
- * Map.ir route path by mode: Car = route/v1/driving, Walking = foot/v1/driving, Bicycle = bicycle/v1/driving, Transit = route/v1/driving.
- * @see https://help.map.ir/documentation/websdk-docs/
- */
-function getRoutePath(serviceType) {
+function toTravelMode(serviceType) {
   const mode = String(serviceType).toLowerCase();
-  if (mode === 'walking') return 'foot/v1/driving';
-  if (mode === 'bicycle') return 'bicycle/v1/driving';
-  return 'route/v1/driving';
+  if (mode === 'walking') return 'walk';
+  if (mode === 'bicycle') return 'bicycle';
+  if (mode === 'transit') return 'transit';
+  return 'car';
 }
 
 /**
- * Get user location, call Map.ir route API (driving/foot/bicycle/transit), draw L.polyline, fitBounds.
- * ETA: data.routes[0].duration (seconds) → Math.floor(duration / 60) minutes.
- * @param {{ lat: number, lng: number }} destinationCoords - Destination point
- * @param {string} serviceType - 'driving' | 'walking' | 'bicycle' | 'transit'
- * @returns {Promise<{ distanceKm: number|null, durationMinutes: number|null, serviceType: string }>}
+ * استخراج مختصات مسیر از پاسخ مسیریابی نشان (overview_polyline یا legs[].steps[].polyline).
+ * مستندات: https://platform.neshan.org/docs/sdk/web/mapboxgl/examples/neshan-mapbox-draw-route/
+ * @param {object} routeGeometry - routes[0] از پاسخ API نشان
+ * @returns {Array<[number,number]>} آرایهٔ [lat, lng] برای L.polyline؛ در صورت خطا null
  */
-async function getMapirRoute(destinationCoords, serviceType) {
-  const map = window.team13MapInstance;
-  const config = window.MAPIR_CONFIG;
-  if (!map || typeof L === 'undefined') throw new Error('Map not ready');
-  if (!config || !config.apiKey) throw new Error('MAPIR API key not set');
-
-  const destLat = destinationCoords && typeof destinationCoords.lat === 'number' ? destinationCoords.lat : parseFloat(destinationCoords?.lat);
-  const destLng = destinationCoords && typeof destinationCoords.lng === 'number' ? destinationCoords.lng : parseFloat(destinationCoords?.lng);
-  if (isNaN(destLat) || isNaN(destLng)) throw new Error('Invalid destination coordinates');
-
-  const mode = String(serviceType).toLowerCase();
-  const type = (mode === 'walking' ? 'walking' : mode === 'bicycle' ? 'bicycle' : mode === 'transit' ? 'transit' : 'driving');
-  const position = await new Promise((resolve, reject) => {
-    if (!navigator.geolocation) return reject(new Error('Geolocation not supported'));
-    navigator.geolocation.getCurrentPosition(resolve, (e) => reject(new Error(e.message || 'موقعیت یافت نشد')), { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
-  });
-
-  const startLat = position.coords.latitude;
-  const startLng = position.coords.longitude;
-  const coords = `${startLng},${startLat};${destLng},${destLat}`;
-  const path = getRoutePath(serviceType);
-  const url = `${MAPIR_ROUTES_BASE}/${path}/${encodeURIComponent(coords)}?steps=true&alternatives=false&geometries=polyline6`;
-
-  const res = await fetch(url, {
-    method: 'GET',
-    headers: { 'x-api-key': config.apiKey, Accept: 'application/json' },
-  });
-  if (!res.ok) throw new Error('Route request failed: ' + res.status);
-  const data = await res.json();
-
-  const distanceKm = parseRouteDistance(data);
-  let durationSec = parseRouteDuration(data);
-  if ((type === 'walking') && (durationSec == null || durationSec <= 0) && distanceKm != null && distanceKm > 0) {
-    durationSec = (distanceKm / WALKING_SPEED_KMH) * 3600;
+function decodeRouteGeometry(routeGeometry) {
+  if (!routeGeometry || typeof polyline === 'undefined' || typeof polyline.decode !== 'function') return null;
+  const precision = 5;
+  const points = [];
+  try {
+    const overviewEncoded = (routeGeometry.overview_polyline && routeGeometry.overview_polyline.points) || (typeof routeGeometry.overview_polyline === 'string' ? routeGeometry.overview_polyline : null);
+    if (overviewEncoded && typeof overviewEncoded === 'string') {
+      const decoded = polyline.decode(overviewEncoded, precision);
+      decoded.forEach((p) => points.push([p[0], p[1]]));
+    }
+    if (points.length === 0 && routeGeometry.legs && Array.isArray(routeGeometry.legs)) {
+      for (const leg of routeGeometry.legs) {
+        const steps = leg.steps || [];
+        for (const step of steps) {
+          const encoded = step.polyline;
+          if (encoded && typeof encoded === 'string') {
+            const decoded = polyline.decode(encoded, precision);
+            decoded.forEach((p) => points.push([p[0], p[1]]));
+          }
+        }
+      }
+    }
+    return points.length > 0 ? points : null;
+  } catch (e) {
+    return null;
   }
-  let durationMinutes = durationSec != null ? Math.max(1, Math.floor(durationSec / 60)) : null;
-  if (type === 'transit' && durationMinutes != null) {
-    durationMinutes = Math.max(1, Math.round(durationMinutes * 1.4));
-  }
+}
 
-  const route = data.routes && data.routes[0];
-  const fullPath = decodeRouteGeometryOnly(route, startLat, startLng, destLat, destLng);
-  let linePoints = interpolatePoints(fullPath, 2);
-  linePoints = simplifyPathForRender(linePoints);
-
+function drawStraightRouteLine(map, startLat, startLng, destLat, destLng, routeGeometry) {
+  if (!map || typeof L === 'undefined') return;
+  let linePoints = null;
+  if (routeGeometry) linePoints = decodeRouteGeometry(routeGeometry);
+  if (!linePoints || linePoints.length === 0) linePoints = [[startLat, startLng], [destLat, destLng]];
   if (window.currentPath && map) map.removeLayer(window.currentPath);
   if (window.routeLayer && map) map.removeLayer(window.routeLayer);
   if (window.currentRoute && map) map.removeLayer(window.currentRoute);
   if (window.team13RouteLine && map) map.removeLayer(window.team13RouteLine);
-
   const routePane = map.getPane && map.getPane('team13-route-pane') ? 'team13-route-pane' : 'overlayPane';
   window.currentPath = L.polyline(linePoints, {
     color: '#40916c',
     weight: 6,
     opacity: 1,
-    smoothFactor: 1,
-    noClip: true,
-    lineJoin: 'round',
-    lineCap: 'round',
     pane: routePane,
   }).addTo(map);
   if (window.currentPath.bringToFront) window.currentPath.bringToFront();
   window.routeLayer = window.currentPath;
   window.currentRoute = window.currentPath;
   window.team13RouteLine = window.currentPath;
-
   map.fitBounds(window.currentPath.getBounds(), { padding: [40, 40] });
-
-  return { distanceKm, durationMinutes, serviceType: type };
 }
 
 /**
- * Draw route between two points (no geolocation). Uses Map.ir route API with polyline geometry.
- * @param {{ lat: number, lng: number }} startCoords - Start point
- * @param {{ lat: number, lng: number }} destCoords - Destination point
- * @param {string} serviceType - 'driving' | 'walking' | 'bicycle' | 'transit'
- * @returns {Promise<{ distanceKm: number|null, durationMinutes: number|null, serviceType: string }>}
+ * مسیر از موقعیت کاربر تا نقطهٔ مقصد — ETA از بک‌اند، رسم خط مستقیم.
+ * @param {object} [options] - اختیاری: { no_traffic: true, bearing: 0-360 } برای سرویس بدون ترافیک نشان
  */
-async function getMapirRouteFromTo(startCoords, destCoords, serviceType) {
+async function getRouteFromUserToPoint(destinationCoords, serviceType, options) {
   const map = window.team13MapInstance;
-  const config = window.MAPIR_CONFIG;
   if (!map || typeof L === 'undefined') throw new Error('Map not ready');
-  if (!config || !config.apiKey) throw new Error('MAPIR API key not set');
+
+  const destLat = destinationCoords && typeof destinationCoords.lat === 'number' ? destinationCoords.lat : parseFloat(destinationCoords?.lat);
+  const destLng = destinationCoords && typeof destinationCoords.lng === 'number' ? destinationCoords.lng : parseFloat(destinationCoords?.lng);
+  if (isNaN(destLat) || isNaN(destLng)) throw new Error('Invalid destination coordinates');
+
+  const position = await new Promise((resolve, reject) => {
+    if (!navigator.geolocation) return reject(new Error('Geolocation not supported'));
+    navigator.geolocation.getCurrentPosition(resolve, (e) => reject(new Error(e.message || 'موقعیت یافت نشد')), { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+  });
+  const startLat = position.coords.latitude;
+  const startLng = position.coords.longitude;
+  const travelMode = toTravelMode(serviceType);
+  const routeParams = {
+    source_lat: String(startLat),
+    source_lng: String(startLng),
+    source_name: 'موقعیت من',
+    dest_lat: String(destLat),
+    dest_lng: String(destLng),
+    dest_name: 'مقصد',
+    travel_mode: travelMode,
+  };
+  if (options && options.no_traffic && travelMode === 'car') routeParams.no_traffic = '1';
+  if (options && options.bearing != null && options.bearing >= 0 && options.bearing <= 360) routeParams.bearing = String(options.bearing);
+
+  const data = await fetchData('routes/', routeParams);
+  drawStraightRouteLine(map, startLat, startLng, destLat, destLng, data.route_geometry || null);
+  const distanceKm = data.distance_km != null ? Number(data.distance_km) : null;
+  let durationMinutes = data.eta_minutes != null ? Number(data.eta_minutes) : null;
+  const type = (travelMode === 'walk' ? 'walking' : travelMode === 'bicycle' ? 'bicycle' : travelMode === 'transit' ? 'transit' : 'driving');
+  if (durationMinutes != null && travelMode === 'bicycle') durationMinutes = Math.round(durationMinutes * 1.55);
+  if (durationMinutes != null && (travelMode === 'walk' || travelMode === 'walking')) durationMinutes = Math.round(durationMinutes * 3);
+  return { distanceKm, durationMinutes, serviceType: type, eta_source: data.eta_source };
+}
+
+/**
+ * مسیر بین دو نقطه — ETA از بک‌اند، رسم خط مستقیم.
+ * @param {object} [options] - اختیاری: { no_traffic: true, bearing: 0-360 } برای سرویس بدون ترافیک نشان
+ */
+async function getRouteFromTo(startCoords, destCoords, serviceType, options) {
+  const map = window.team13MapInstance;
+  if (!map || typeof L === 'undefined') throw new Error('Map not ready');
 
   const startLat = startCoords && typeof startCoords.lat === 'number' ? startCoords.lat : parseFloat(startCoords?.lat);
   const startLng = startCoords && typeof startCoords.lng === 'number' ? startCoords.lng : parseFloat(startCoords?.lng);
@@ -511,133 +346,189 @@ async function getMapirRouteFromTo(startCoords, destCoords, serviceType) {
   const destLng = destCoords && typeof destCoords.lng === 'number' ? destCoords.lng : parseFloat(destCoords?.lng);
   if (isNaN(startLat) || isNaN(startLng) || isNaN(destLat) || isNaN(destLng)) throw new Error('Invalid start or destination coordinates');
 
-  const mode = String(serviceType).toLowerCase();
-  const type = (mode === 'walking' ? 'walking' : mode === 'bicycle' ? 'bicycle' : mode === 'transit' ? 'transit' : 'driving');
-  const coords = `${startLng},${startLat};${destLng},${destLat}`;
-  const path = getRoutePath(serviceType);
-  const url = `${MAPIR_ROUTES_BASE}/${path}/${encodeURIComponent(coords)}?steps=true&alternatives=false&geometries=polyline6`;
+  const travelMode = toTravelMode(serviceType);
+  const routeParams = {
+    source_lat: String(startLat),
+    source_lng: String(startLng),
+    source_name: 'مبدأ',
+    dest_lat: String(destLat),
+    dest_lng: String(destLng),
+    dest_name: 'مقصد',
+    travel_mode: travelMode,
+  };
+  if (options && options.no_traffic && travelMode === 'car') routeParams.no_traffic = '1';
+  if (options && options.bearing != null && options.bearing >= 0 && options.bearing <= 360) routeParams.bearing = String(options.bearing);
 
-  const res = await fetch(url, {
-    method: 'GET',
-    headers: { 'x-api-key': config.apiKey, Accept: 'application/json' },
-  });
-  if (!res.ok) throw new Error('Route request failed: ' + res.status);
-  const data = await res.json();
-
-  const distanceKm = parseRouteDistance(data);
-  let durationSec = parseRouteDuration(data);
-  if ((type === 'walking') && (durationSec == null || durationSec <= 0) && distanceKm != null && distanceKm > 0) {
-    durationSec = (distanceKm / WALKING_SPEED_KMH) * 3600;
-  }
-  let durationMinutes = durationSec != null ? Math.max(1, Math.floor(durationSec / 60)) : null;
-  if (type === 'transit' && durationMinutes != null) {
-    durationMinutes = Math.max(1, Math.round(durationMinutes * 1.4));
-  }
-
-  const route = data.routes && data.routes[0];
-  const fullPath = decodeRouteGeometryOnly(route, startLat, startLng, destLat, destLng);
-  let linePoints = interpolatePoints(fullPath, 2);
-  linePoints = simplifyPathForRender(linePoints);
-
-  if (window.currentPath && map) map.removeLayer(window.currentPath);
-  if (window.routeLayer && map) map.removeLayer(window.routeLayer);
-  if (window.currentRoute && map) map.removeLayer(window.currentRoute);
-  if (window.team13RouteLine && map) map.removeLayer(window.team13RouteLine);
-
-  const routePane = map.getPane && map.getPane('team13-route-pane') ? 'team13-route-pane' : 'overlayPane';
-  window.currentPath = L.polyline(linePoints, {
-    color: '#40916c',
-    weight: 6,
-    opacity: 1,
-    smoothFactor: 1,
-    noClip: true,
-    lineJoin: 'round',
-    lineCap: 'round',
-    pane: routePane,
-  }).addTo(map);
-  if (window.currentPath.bringToFront) window.currentPath.bringToFront();
-  window.routeLayer = window.currentPath;
-  window.currentRoute = window.currentPath;
-  window.team13RouteLine = window.currentPath;
-
-  map.fitBounds(window.currentPath.getBounds(), { padding: [40, 40] });
-
-  return { distanceKm, durationMinutes, serviceType: type };
+  const data = await fetchData('routes/', routeParams);
+  drawStraightRouteLine(map, startLat, startLng, destLat, destLng, data.route_geometry || null);
+  const distanceKm = data.distance_km != null ? Number(data.distance_km) : null;
+  let durationMinutes = data.eta_minutes != null ? Number(data.eta_minutes) : null;
+  const type = (travelMode === 'walk' ? 'walking' : travelMode === 'bicycle' ? 'bicycle' : travelMode === 'transit' ? 'transit' : 'driving');
+  if (durationMinutes != null && travelMode === 'bicycle') durationMinutes = Math.round(durationMinutes * 4.55);
+  if (durationMinutes != null && (travelMode === 'walk' || travelMode === 'walking')) durationMinutes = Math.round(durationMinutes * 3);
+  return { distanceKm, durationMinutes, serviceType: type, eta_source: data.eta_source };
 }
 
 /**
- * Reverse geocode: get Iranian address for a point (Map.ir Reverse API).
- * @see https://help.map.ir/reverse_api/
- * @param {number} lat - Latitude
- * @param {number} lon - Longitude
- * @returns {Promise<{ address: string, address_compact?: string, city?: string, province?: string, [key: string]: any }|null>}
+ * تبدیل مختصات به آدرس (Reverse Geocoding) نشان.
+ * خروجی: { status, formatted_address, address, address_compact, route_name, route_type,
+ *   neighbourhood, city, state, place, municipality_zone, in_traffic_zone, in_odd_even_zone,
+ *   village, county, district } یا null.
  */
 async function reverseGeocode(lat, lon) {
-  const config = window.MAPIR_CONFIG;
-  if (!config || !config.apiKey) return null;
-  const url = `${MAPIR_REVERSE}?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`;
-  const res = await fetch(url, {
-    method: 'GET',
-    headers: { 'x-api-key': config.apiKey, Accept: 'application/json' },
-  });
-  if (!res.ok) return null;
-  return res.json();
-}
-
-/**
- * Get city (or province) from coordinates using Map.ir Reverse Geocode. Saves to window.currentCity.
- * @param {number} lat - Latitude
- * @param {number} lng - Longitude
- * @returns {Promise<{ city: string, province?: string, lat: number, lng: number }|null>}
- */
-async function getCityFromCoords(lat, lng) {
-  const data = await reverseGeocode(lat, lng);
-  if (!data) return null;
-  const city = (data.city && String(data.city).trim()) || (data.province && String(data.province).trim()) || '';
-  const province = (data.province && String(data.province).trim()) || '';
-  const coords = data.geom && data.geom.coordinates;
-  const latOut = Array.isArray(coords) && coords.length >= 2 ? parseFloat(coords[1]) : lat;
-  const lngOut = Array.isArray(coords) && coords.length >= 2 ? parseFloat(coords[0]) : lng;
-  if (city) {
-    try {
-      window.currentCity = city;
-    } catch (e) {}
+  if (lat == null || lon == null || isNaN(Number(lat)) || isNaN(Number(lon))) return null;
+  try {
+    const data = await fetchData('reverse-geocode/', { lat: String(lat), lng: String(lon) });
+    return data;
+  } catch {
+    return null;
   }
-  return city ? { city, province, lat: latOut, lng: lngOut } : null;
 }
 
 /**
- * Find nearest POI by category using Map.ir Search API (POI).
- * URL: https://map.ir/search/v2/poi?text=${category}&lat=${userLat}&lon=${userLon}
- * @param {string} category - e.g. "بیمارستان" or "آتش نشانی"
- * @returns {Promise<{ lat: number, lng: number, title?: string }|null>} First result or null
+ * تبدیل آدرس متنی به مختصات (Geocoding) نشان.
+ * @param {string} address - آدرس مورد نظر
+ * @param {{ province?: string, city?: string, lat?: number, lng?: number, plus?: boolean, extent?: object }} [options]
+ * @returns {Promise<{ items: Array<{ location: { latitude, longitude }, province, city, neighbourhood, unMatchedTerm }> }>}
  */
+async function geocode(address, options = {}) {
+  if (!address || String(address).trim() === '') return { items: [] };
+  try {
+    return await api.geocode(address, options);
+  } catch {
+    return { items: [] };
+  }
+}
+
+async function getCityFromCoords(lat, lng) {
+  return null;
+}
+
 async function findNearest(category) {
-  const config = window.MAPIR_CONFIG;
-  if (!config || !config.apiKey) return null;
-  const position = await new Promise((resolve, reject) => {
-    if (!navigator.geolocation) return reject(new Error('Geolocation not supported'));
-    navigator.geolocation.getCurrentPosition(resolve, (e) => reject(new Error(e.message || 'موقعیت یافت نشد')), { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+  return null;
+}
+
+/**
+ * بهینه‌سازی ترتیب بازدید از چند نقطه (TSP).
+ * waypoints: آرایهٔ [ [lat,lng], ... ] یا رشتهٔ "lat,lng|lat,lng|..."
+ * خروجی: { points: [ { name, location: [lng,lat], index }, ... ] } به ترتیب بهینه.
+ */
+async function getTspOrder(waypoints, options = {}) {
+  const data = await api.tsp(waypoints, options);
+  return data;
+}
+
+/**
+ * رسم ترتیب بهینهٔ TSP روی نقشه (خط اتصال نقاط به ترتیب).
+ * points: آرایهٔ خروجی TSP؛ هر نقطه location: [lng, lat].
+ */
+function drawTspOrderOnMap(map, points, lineOptions) {
+  if (!map || typeof L === 'undefined' || !points || points.length < 2) return null;
+  const latlngs = points.map(p => {
+    const loc = p.location;
+    return [loc[1], loc[0]];
   });
-  const userLat = position.coords.latitude;
-  const userLon = position.coords.longitude;
-  const url = `${MAPIR_SEARCH_POI}?text=${encodeURIComponent(category)}&lat=${userLat}&lon=${userLon}`;
-  const res = await fetch(url, {
-    method: 'GET',
-    headers: { 'x-api-key': config.apiKey, Accept: 'application/json' },
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  const value = data.value || data;
-  const list = Array.isArray(value) ? value : (value.results || value.items || []);
-  const first = list[0];
-  if (!first) return null;
-  const lat = first.y != null ? parseFloat(first.y) : (first.lat != null ? parseFloat(first.lat) : first.geometry?.coordinates?.[1]);
-  const lng = first.x != null ? parseFloat(first.x) : (first.lon != null ? parseFloat(first.lon) : first.geometry?.coordinates?.[0]);
-  if (lat == null || lng == null || isNaN(lat) || isNaN(lng)) return null;
-  return { lat: Number(lat), lng: Number(lng), title: first.title || first.name || category };
+  if (window.team13TspLine && map) map.removeLayer(window.team13TspLine);
+  window.team13TspLine = L.polyline(latlngs, {
+    color: (lineOptions && lineOptions.color) || '#e07c24',
+    weight: (lineOptions && lineOptions.weight) || 5,
+    opacity: 0.9,
+    dashArray: '8,8',
+    ...lineOptions,
+  }).addTo(map);
+  map.fitBounds(window.team13TspLine.getBounds(), { padding: [40, 40] });
+  return window.team13TspLine;
+}
+
+/**
+ * دریافت محدوده در دسترس (Isochrone) از بک‌اند.
+ * حداقل یکی از options.distance_km یا options.time_minutes الزامی است.
+ */
+async function getIsochrone(lat, lng, options) {
+  return api.isochrone(lat, lng, options);
+}
+
+/**
+ * رسم GeoJSON محدوده در دسترس (Isochrone) روی نقشه.
+ * geojson: پاسخ سرویس (FeatureCollection با geometry نوع Polygon یا LineString).
+ */
+function drawIsochroneOnMap(map, geojson, layerOptions) {
+  if (!map || typeof L === 'undefined' || !geojson || !geojson.features) return null;
+  if (window.team13IsochroneLayer && map) map.removeLayer(window.team13IsochroneLayer);
+  const style = {
+    color: (layerOptions && layerOptions.color) || '#2563eb',
+    weight: (layerOptions && layerOptions.weight) || 2,
+    opacity: 0.8,
+    fillColor: (layerOptions && layerOptions.fillColor) || '#3b82f6',
+    fillOpacity: (layerOptions && layerOptions.fillOpacity) != null ? layerOptions.fillOpacity : 0.15,
+    ...layerOptions,
+  };
+  window.team13IsochroneLayer = L.geoJSON(geojson, { style }).addTo(map);
+  if (window.team13IsochroneLayer.getBounds && window.team13IsochroneLayer.getBounds().isValid()) {
+    map.fitBounds(window.team13IsochroneLayer.getBounds(), { padding: [40, 40] });
+  }
+  return window.team13IsochroneLayer;
+}
+
+/**
+ * نگاشت نقاط خام (مثلاً GPS) به مسیر روی نقشه (Map Matching).
+ * path: رشتهٔ lat,lng|lat,lng|... یا آرایهٔ [[lat,lng], ...].
+ */
+async function getMapMatching(path) {
+  return api.mapMatching(path);
+}
+
+/**
+ * رسم مسیر نگاشت‌شده (Map Matching) روی نقشه.
+ * data: پاسخ سرویس { snappedPoints, geometry }؛ geometry = Encoded Polyline.
+ */
+function drawMapMatchedRouteOnMap(map, data, lineOptions) {
+  if (!map || typeof L === 'undefined' || !data) return null;
+  let latlngs = null;
+  if (data.geometry && typeof decodeRouteGeometry === 'function') {
+    latlngs = decodeRouteGeometry({ overview_polyline: { points: data.geometry } });
+  }
+  if ((!latlngs || latlngs.length < 2) && data.snappedPoints && data.snappedPoints.length >= 2) {
+    latlngs = data.snappedPoints.map(p => {
+      const loc = p.location;
+      return Array.isArray(loc) ? [loc[0], loc[1]] : [loc.lat, loc.lng];
+    });
+  }
+  if (!latlngs || latlngs.length < 2) return null;
+  if (window.team13MapMatchingLine && map) map.removeLayer(window.team13MapMatchingLine);
+  window.team13MapMatchingLine = L.polyline(latlngs, {
+    color: (lineOptions && lineOptions.color) || '#059669',
+    weight: (lineOptions && lineOptions.weight) || 5,
+    opacity: 0.9,
+    ...lineOptions,
+  }).addTo(map);
+  map.fitBounds(window.team13MapMatchingLine.getBounds(), { padding: [40, 40] });
+  return window.team13MapMatchingLine;
 }
 
 if (typeof window !== 'undefined') {
-  window.Team13Api = { fetchData, getCsrfToken, postRating, api, loadMapData, getMapirRoute, getMapirRouteFromTo, findNearest, reverseGeocode, getCityFromCoords };
+  window.Team13Api = {
+    fetchData,
+    getCsrfToken,
+    postRating,
+    postJson,
+    api,
+    loadMapData,
+    emergency: (api && api.emergency) ? api.emergency.bind(api) : undefined,
+    getRouteFromUserToPoint,
+    getRouteFromTo,
+    getMapirRoute: getRouteFromUserToPoint,
+    getMapirRouteFromTo: getRouteFromTo,
+    getTspOrder,
+    drawTspOrderOnMap,
+    getIsochrone,
+    drawIsochroneOnMap,
+    getMapMatching,
+    drawMapMatchedRouteOnMap,
+    findNearest,
+    reverseGeocode,
+    geocode,
+    getCityFromCoords,
+    decodeRouteGeometry,
+  };
 }
