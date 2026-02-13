@@ -207,14 +207,22 @@
     }
     var marker = new nmp_mapboxgl.Marker({ element: el, draggable: draggable }).setLngLat([lng, lat]);
     var popupInstance = null;
-    el.addEventListener('click', function () {
+    el.addEventListener('click', function (ev) {
+      if (ev && ev.stopPropagation) ev.stopPropagation();
+      if (ev && ev.preventDefault) ev.preventDefault();
       if (popupInstance && typeof marker.togglePopup === 'function') marker.togglePopup();
     });
     var wrapper = {
       _marker: marker,
       _onMap: false,
       bindPopup: function (content) {
-        popupInstance = new nmp_mapboxgl.Popup({ offset: 25 }).setHTML(typeof content === 'string' ? content : '');
+        popupInstance = new nmp_mapboxgl.Popup({ offset: 25 });
+        if (content instanceof window.HTMLElement) {
+          if (typeof popupInstance.setDOMContent === 'function') popupInstance.setDOMContent(content);
+          else popupInstance.setHTML(content.innerHTML || '');
+        } else {
+          popupInstance.setHTML(typeof content === 'string' ? content : '');
+        }
         if (typeof popupInstance.on === 'function') {
           popupInstance.on('open', function () {
             if (wrapper._popupopen) wrapper._popupopen();
@@ -241,6 +249,10 @@
         };
       },
       togglePopup: function () {
+        if (marker && typeof marker.togglePopup === 'function') marker.togglePopup();
+        return this;
+      },
+      openPopup: function () {
         if (marker && typeof marker.togglePopup === 'function') marker.togglePopup();
         return this;
       },

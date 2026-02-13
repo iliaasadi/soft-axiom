@@ -1062,6 +1062,37 @@ body.team13-map {
   box-shadow: 0 0 14px rgba(100, 116, 139, 0.5);
 }
 
+/* دکمه افزودن نقطه (Placement Mode) — زیر دکمه POI */
+.team13-btn-add-pointer {
+  position: absolute;
+  top: 6.75rem;
+  left: 1rem;
+  z-index: 1000;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: none;
+  background: #40916c;
+  color: #fff;
+  font-size: 0.875rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.team13-btn-add-pointer:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 14px rgba(64, 145, 108, 0.5);
+}
+.team13-btn-add-pointer.active-btn {
+  background: #1b4332;
+  box-shadow: 0 0 0 2px #fff, 0 0 14px rgba(64, 145, 108, 0.7);
+}
+.team13-btn-add-pointer .team13-btn-add-pointer-label {
+  white-space: nowrap;
+}
+
 /* Panels wrap & panel visibility — 0.3s ease-in-out fade/slide */
 .team13-panels-wrap {
   position: relative;
@@ -1866,10 +1897,58 @@ body.team13-map {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* ========== Global popup close button (Leaflet / Mapbox) ========== */
+.leaflet-popup-close-button,
+.mapboxgl-popup-close-button {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  top: 8px !important;
+  right: 8px !important;
+  left: auto !important;
+  font-size: 18px !important;
+  line-height: 28px !important;
+  text-align: center !important;
+  color: #5c5c5c !important;
+  background: #fff !important;
+  border: none !important;
+  border-radius: 50% !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  z-index: 1 !important;
+}
+.leaflet-popup-close-button:hover,
+.mapboxgl-popup-close-button:hover {
+  color: #c62828 !important;
+  background: #f5f5f5 !important;
+  transform: rotate(90deg) !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* ========== Unified popup container (Soft UI) ========== */
+.leaflet-popup-content-wrapper,
+.leaflet-popup.team13-reverse-popup .leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+.mapboxgl-popup-content {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
 /* POI popup: title bold #1a1a1a, 12px gap before action buttons */
 .team13-popup,
 .team13-reverse-popup-content {
   line-height: 1.6;
+  padding: 15px 18px !important;
+  min-width: 200px;
 }
 .team13-popup strong {
   display: block;
@@ -1910,6 +1989,17 @@ body.team13-map {
   filter: brightness(0.95);
   transform: scale(1.02);
 }
+/* Hover: light gray for the 3 main action rows in discovery/saved popups */
+.team13-popup .team13-btn-place-details:hover,
+.team13-popup .team13-btn-discovery-detail:hover {
+  background: #e8e8e8 !important;
+  color: #333 !important;
+}
+.team13-popup .team13-btn-route-to-place:hover,
+.team13-popup .team13-btn-route-to-event:hover,
+.team13-popup .team13-btn-discovery-route:hover {
+  background: #f0e5b8 !important;
+}
 .team13-popup .team13-btn-discovery-detail {
   display: inline-block;
   background: #f5f5f5 !important;
@@ -1945,13 +2035,50 @@ body.team13-map {
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, background-color 0.2s ease;
   border: none;
   white-space: nowrap;
   font-family: inherit;
 }
+/* Hover: subtle light gray so action rows read as clickable */
 .team13-reverse-popup-btn:hover {
-  transform: scale(1.05);
+  transform: scale(1.02);
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+.team13-reverse-popup-btn.team13-reverse-popup-btn-green:hover,
+.team13-reverse-popup-btn.team13-reverse-popup-btn-start:hover,
+.team13-reverse-popup-btn.team13-reverse-popup-btn-dest:hover,
+.team13-reverse-popup-btn.team13-reverse-popup-btn-fav:hover {
+  background-color: inherit !important;
+  filter: brightness(0.96);
+}
+/* Saved-point actions: match Add Point theme (primary green/teal + gold route) */
+.team13-reverse-popup-content .team13-btn-place-details {
+  background: #40916c !important;
+  color: #fff !important;
+}
+.team13-reverse-popup-content .team13-btn-place-detail-page {
+  background: #1b4332 !important;
+  color: #fff !important;
+  text-decoration: none !important;
+}
+.team13-reverse-popup-content .team13-btn-route-to-place,
+.team13-reverse-popup-content .team13-btn-route-to-event {
+  background: #fbc02d !important;
+  color: #1a1a1a !important;
+}
+/* Hover for the 3 main action rows: subtle light gray so they read as clickable */
+.team13-reverse-popup-content .team13-btn-place-details:hover,
+.team13-reverse-popup-content .team13-btn-place-detail-page:hover,
+.team13-reverse-popup-content .team13-btn-route-to-place:hover,
+.team13-reverse-popup-content .team13-btn-route-to-event:hover {
+  background-color: #e8e8e8 !important;
+  color: #333 !important;
+}
+.team13-reverse-popup-content .team13-btn-route-to-place:hover,
+.team13-reverse-popup-content .team13-btn-route-to-event:hover {
+  background-color: #f0e5b8 !important;
+  color: #1a1a1a !important;
 }
 .team13-reverse-popup-btn-fav {
   background: #fff;

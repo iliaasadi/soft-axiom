@@ -11,6 +11,7 @@
     window.currentlyShownPoiMarker = window.currentlyShownPoiMarker || null;
     window.emergencyPoiMarker = window.emergencyPoiMarker || null;
     window._team13PoiIconsVisible = window._team13PoiIconsVisible !== false;
+    window.isPlacementMode = false;
   }
 
   function getMap() {
@@ -160,7 +161,7 @@
     });
   }
 
-  // --- Popup: Place — اطلاعات مکان + دکمه جزئیات (مودال)، لینک صفحهٔ جزئیات، مسیریابی ---
+  // --- Popup: Place — همان قالب پاپ‌آپ «انتخاب نقطه» برای یکپارچگی UI ---
   function buildPlacePopupContent(p, lat, lng) {
     var name = (p.name_fa || p.name_en || p.type_display || '').trim() || p.place_id;
     var typeDisplay = (p.type_display || p.type || '').trim() || '—';
@@ -169,27 +170,29 @@
     var base = (window.TEAM13_API_BASE || '/team13').replace(/\/$/, '');
     var detailPageUrl = base + '/places/' + (placeId || '') + '/';
     var rating = p.rating != null && !isNaN(parseFloat(p.rating)) ? parseFloat(p.rating) : null;
-    var ratingHtml = rating != null ? '<span class="team13-popup-rating">امتیاز: ' + rating + '/۵</span>' : '';
-    var btnDetails = '<button type="button" class="team13-btn-place-details team13-popup-btn-details" data-place-id="' + escapeHtml(placeId) + '" data-lat="' + lat + '" data-lng="' + lng + '" data-name="' + escapeHtml(name) + '">جزئیات (امتیاز / نظر / عکس)</button>';
-    var linkDetailPage = '<a href="' + escapeHtml(detailPageUrl) + '" class="team13-btn-place-detail-page team13-popup-btn-details">صفحهٔ جزئیات مکان</a>';
-    var btnRoute = '<button type="button" class="team13-btn-route-to-place" data-lat="' + lat + '" data-lng="' + lng + '" data-name="' + escapeHtml(name) + '">مسیریابی به اینجا</button>';
-    return '<div class="team13-popup team13-place-notice" dir="rtl">' +
-      '<div class="team13-place-notice-header"><strong>' + escapeHtml(name) + '</strong></div>' +
-      '<div class="team13-place-notice-type">' + escapeHtml(typeDisplay) + '</div>' +
-      (ratingHtml ? '<div class="team13-place-notice-rating">' + ratingHtml + '</div>' : '') +
-      '<div class="team13-place-notice-address text-muted">' + escapeHtml(address) + '</div>' +
-      '<div class="team13-place-notice-actions">' + btnDetails + ' ' + linkDetailPage + ' ' + btnRoute + '</div>' +
+    var ratingHtml = rating != null ? ' · امتیاز: ' + rating + '/۵' : '';
+    var addressLine = escapeHtml(name) + (typeDisplay !== '—' ? ' · ' + escapeHtml(typeDisplay) : '') + ratingHtml + (address !== '—' ? '<br><span class="text-muted">' + escapeHtml(address) + '</span>' : '');
+    var btnDetails = '<button type="button" class="team13-reverse-popup-btn team13-btn-place-details" data-place-id="' + escapeHtml(placeId) + '" data-lat="' + lat + '" data-lng="' + lng + '" data-name="' + escapeHtml(name) + '">جزئیات (امتیاز / نظر / عکس)</button>';
+    var linkDetailPage = '<a href="' + escapeHtml(detailPageUrl) + '" class="team13-reverse-popup-btn team13-btn-place-detail-page">صفحهٔ جزئیات مکان</a>';
+    var btnRoute = '<button type="button" class="team13-reverse-popup-btn team13-btn-route-to-place" data-lat="' + lat + '" data-lng="' + lng + '" data-name="' + escapeHtml(name) + '">مسیریابی به اینجا</button>';
+    return '<div class="team13-reverse-popup-content" dir="rtl">' +
+      '<p class="team13-reverse-popup-address">' + addressLine + '</p>' +
+      '<div class="team13-reverse-popup-actions">' + btnDetails + ' ' + linkDetailPage + ' ' + btnRoute + '</div>' +
       '</div>';
   }
 
-  // --- Popup: Event (time + "مسیریابی به رویداد") ---
+  // --- Popup: Event — همان قالب پاپ‌آپ «انتخاب نقطه» برای یکپارچگی UI ---
   function buildEventPopupContent(e) {
     var lat = parseFloat(e.latitude);
     var lng = parseFloat(e.longitude);
     var title = (e.title_fa || e.title_en || e.event_id || '').trim();
     var timeText = (e.start_at || e.start_at_iso || '') + (e.end_at || e.end_at_iso ? ' تا ' + (e.end_at || e.end_at_iso) : '');
-    var routeBtn = '<button type="button" class="team13-btn-route-to-event" data-lat="' + lat + '" data-lng="' + lng + '" data-name="' + escapeHtml(title) + '">مسیریابی به رویداد</button>';
-    return '<div class="team13-popup"><strong>' + escapeHtml(title) + '</strong><br><span class="text-muted">زمان: ' + escapeHtml(timeText || '—') + '</span><br>' + routeBtn + '</div>';
+    var addressLine = escapeHtml(title) + '<br><span class="text-muted">زمان: ' + escapeHtml(timeText || '—') + '</span>';
+    var routeBtn = '<button type="button" class="team13-reverse-popup-btn team13-btn-route-to-event" data-lat="' + lat + '" data-lng="' + lng + '" data-name="' + escapeHtml(title) + '">مسیریابی به رویداد</button>';
+    return '<div class="team13-reverse-popup-content" dir="rtl">' +
+      '<p class="team13-reverse-popup-address">' + addressLine + '</p>' +
+      '<div class="team13-reverse-popup-actions">' + routeBtn + '</div>' +
+      '</div>';
   }
 
   // --- Sync DB layers: fetch places + events from our API, add markers, sidebar cards ---
@@ -313,7 +316,7 @@
     });
   }
 
-  /** مکان‌های دیتابیس را با طول و عرض جغرافیایی روی نقشه نمایش می‌دهد. */
+  /** مکان‌های دیتابیس را با طول و عرض جغرافیایی روی نقشه نمایش می‌دهد. هر مارکر با bindPopup به پاپ‌آپ متصل است؛ کلیک روی مارکر پاپ‌آپ را باز می‌کند (از طریق رفتار پیش‌فرض L.marker در wrapper). */
   function addPlaceMarkers(map, places) {
     if (!map || !L) return;
     var allMarkers = Object.assign({}, window.allMarkers || {});
@@ -1627,12 +1630,38 @@
     return true;
   }
 
+  // --- Placement mode: add pointer only when user has toggled it via "Select Point" button ---
+  function setPlacementModeActive(active) {
+    window.isPlacementMode = !!active;
+    var container = document.getElementById('map-container');
+    if (container) container.style.cursor = active ? 'crosshair' : '';
+    var btn = document.getElementById('team13-btn-add-pointer');
+    if (btn) btn.classList.toggle('active-btn', active);
+  }
+
   // --- Map click: show green button only; second click (on button) → nearest-place then register or rate/photo ---
+  // Ensure clicks on markers/popups do not trigger placement or other map-click logic (event priority).
   function initReverseGeocodeClick() {
     var map = getMap();
     if (!map || !window.Team13Api) return;
     map.off('click', onMapClickReverseGeocode);
     map.on('click', onMapClickReverseGeocode);
+
+    var container = document.getElementById('map-container');
+    if (container && !container._team13CaptureClickInstalled) {
+      container._team13CaptureClickInstalled = true;
+      container.addEventListener('click', function (e) {
+        var target = e.target;
+        if (target && typeof target.closest === 'function') {
+          if (target.closest('.mapboxgl-marker') || target.closest('.team13-neshan-marker') ||
+              target.closest('.mapboxgl-popup') || target.closest('.team13-reverse-popup-content') ||
+              target.closest('.team13-reverse-popup') || target.closest('.team13-place-marker')) {
+            window._team13ClickOnMarkerOrPopup = true;
+          }
+        }
+        setTimeout(function () { window._team13ClickOnMarkerOrPopup = false; }, 0);
+      }, true);
+    }
   }
 
   /** پاپ‌آپ دکمهٔ سبز: یک دکمه «ادامه»؛ با کلیک روی آن nearest-place صدا زده می‌شود و بر اساس نتیجه ثبت مکان یا امتیاز/عکس. */
@@ -1741,6 +1770,10 @@
   }
 
   function onMapClickReverseGeocode(e) {
+    if (window._team13ClickOnMarkerOrPopup) {
+      window._team13ClickOnMarkerOrPopup = false;
+      return;
+    }
     if (window._team13EmergencyPickMode && e && e.latlng) {
       window._team13EmergencyPickMode = false;
       var lat = e.latlng.lat;
@@ -1759,6 +1792,7 @@
       cb(lat, lng);
       return;
     }
+    if (!window.isPlacementMode) return;
     var map = getMap();
     if (!map || !e || !e.latlng) return;
     var lat = e.latlng.lat;
@@ -1776,8 +1810,25 @@
       iconAnchor: [11, 11],
     });
     reverseGeocodeMarker = L.marker([lat, lng], { icon: markerIcon }).addTo(map);
-    var wrap = buildGreenButtonPopupContent(lat, lng, reverseGeocodeMarker, map);
-    reverseGeocodeMarker.bindPopup(wrap, { className: 'team13-reverse-popup', closeButton: true }).openPopup();
+
+    function openPopupWithAddress(address) {
+      var wrap = buildReversePopupContent(lat, lng, address, reverseGeocodeMarker, map);
+      reverseGeocodeMarker.bindPopup(wrap, { className: 'team13-reverse-popup', closeButton: true }).openPopup();
+      setPlacementModeActive(false);
+    }
+
+    if (window.Team13Api && typeof window.Team13Api.reverseGeocode === 'function') {
+      window.Team13Api.reverseGeocode(lat, lng)
+        .then(function (data) {
+          var address = (data && (data.formatted_address || data.address || data.address_compact || data.postal_address)) || '';
+          openPopupWithAddress(address || ('مختصات: ' + lat.toFixed(5) + ', ' + lng.toFixed(5)));
+        })
+        .catch(function () {
+          openPopupWithAddress('آدرس یافت نشد');
+        });
+    } else {
+      openPopupWithAddress('مختصات: ' + lat.toFixed(5) + ', ' + lng.toFixed(5));
+    }
   }
 
   // --- لایو لوکیشن: فقط با کلیک دکمه (نقشه نشان map.locate ندارد؛ از Geolocation API استفاده می‌کنیم) ---
@@ -1878,6 +1929,18 @@
       }
       setPoiIconsVisible(window._team13PoiIconsVisible);
       updateButtonState();
+    });
+  }
+
+  function initAddPointerButton() {
+    var btn = document.getElementById('team13-btn-add-pointer');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      if (window.isPlacementMode) {
+        setPlacementModeActive(false);
+      } else {
+        setPlacementModeActive(true);
+      }
     });
   }
 
@@ -2323,6 +2386,7 @@
     startUserLocationTracking();
     initCenterOnMeButton();
     initPoiToggleButton();
+    initAddPointerButton();
   }
 
   function waitMapAndRun() {
